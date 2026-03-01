@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ultra Security Monitor – Dashboard</title>
+  <style>
+    :root {
+      --bg:       #0d1117;
+      --card:     #161b22;
+      --border:   #30363d;
+      --text:     #e6edf3;
+      --muted:    #8b949e;
+      --accent:   #58a6ff;
+      --danger:   #f85149;
+      --warning:  #d29922;
+      --success:  #3fb950;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header h1 { font-size: 18px; font-weight: 600; }
+    header .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: var(--success);
+      color: #000;
+      font-weight: 600;
+    }
+    header .last-update { margin-left: auto; color: var(--muted); font-size: 12px; }
+    main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+    .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); margin-bottom: 24px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .card .label { color: var(--muted); font-size: 12px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .5px; }
+    .card .value { font-size: 28px; font-weight: 700; }
+    .card .value.danger  { color: var(--danger); }
+    .card .value.warning { color: var(--warning); }
+    .card .value.success { color: var(--success); }
+    .section-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: var(--accent); }
+    .log-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      max-height: 360px;
+      overflow-y: auto;
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .log-box .entry { padding: 3px 0; border-bottom: 1px solid var(--border); }
+    .log-box .entry:last-child { border-bottom: none; }
+    .log-box .ts { color: var(--muted); margin-right: 8px; }
+    .log-box .text-danger  { color: var(--danger); }
+    .log-box .text-warning { color: var(--warning); }
+    .log-box .text-info    { color: var(--accent); }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+    canvas { max-height: 200px; }
+    .alert-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .alert-row:last-child { border-bottom: none; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot.high   { background: var(--danger); }
+    .dot.medium { background: var(--warning); }
+    .dot.low    { background: var(--success); }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 11px;
+      padding: 24px;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>🛡️ Ultra Security Monitor</h1>
+  <span class="badge" id="status-badge">AKTYWNY</span>
+  <span class="last-update" id="last-update"></span>
+</header>
+
+<main>
+  <!-- KPI cards -->
+  <div class="grid">
+    <div class="card">
+      <div class="label">Alerty (dziś)</div>
+      <div class="value danger" id="kpi-alerts">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Podejrzane procesy</div>
+      <div class="value warning" id="kpi-procs">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Zmiany plików</div>
+      <div class="value" id="kpi-files">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Zdarzenia SIEM</div>
+      <div class="value success" id="kpi-siem">—</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="two-col">
+    <div class="card">
+      <div class="section-title">Aktywność alertów (ostatnie 24h)</div>
+      <canvas id="chart-alerts"></canvas>
+    </div>
+    <div class="card">
+      <div class="section-title">Zdarzenia SIEM według ważności</div>
+      <canvas id="chart-severity"></canvas>
+    </div>
+  </div>
+
+  <!-- Recent alerts -->
+  <div class="two-col">
+    <div class="card" style="grid-column: span 1;">
+      <div class="section-title">Ostatnie alerty</div>
+      <div id="alert-list">
+        <div class="alert-row"><span class="dot high"></span><span>Brak danych — załaduj plik siem.json</span></div>
+      </div>
+    </div>
+    <!-- Log viewer -->
+    <div class="card" style="grid-column: span 1;">
+      <div class="section-title">Log zabezpieczeń</div>
+      <div class="log-box" id="log-box">
+        <div class="entry text-info">Załaduj plik security.log za pomocą przycisku poniżej.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- File loader -->
+  <div class="card" style="margin-top: 16px;">
+    <div class="section-title">Załaduj dane lokalne</div>
+    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:8px;">
+      <label style="cursor:pointer;">
+        <input type="file" id="load-log" accept=".log,.txt" style="display:none" />
+        <span style="padding:6px 14px; background:var(--accent); color:#000; border-radius:6px; font-weight:600; font-size:12px;">
+          📄 Załaduj security.log
+        </span>
+      </label>
+      <label style="cursor:pointer;">
+        <input type="file" id="load-siem" accept=".json" style="display:none" />
+        <span style="padding:6px 14px; background:var(--warning); color:#000; border-radius:6px; font-weight:600; font-size:12px;">
+          📊 Załaduj siem.json
+        </span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Dynamic Roadmap -->
+  <div class="card" style="margin-top: 16px;">
+    <div class="section-title">🗺 Dynamiczna Roadmapa</div>
+    <div id="roadmap-box" style="font-size:13px; line-height:1.8;"></div>
+  </div>
+</main>
+
+<footer>Ultra Security Monitor – Total Edition &nbsp;|&nbsp; Dashboard v1.0</footer>
+
+<script>
+// ---- helpers ----
+function $(id) { return document.getElementById(id); }
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function updateTime() {
+  $('last-update').textContent = 'Odświeżono: ' + new Date().toLocaleTimeString('pl-PL');
+}
+updateTime();
+
+// ---- Minimal bar chart (SVG, no external dependencies) ----
+function drawBarChart(canvasId, data, labels) {
+  const canvas = $(canvasId);
+  const W = canvas.offsetWidth || 560, H = 180;
+  canvas.setAttribute('width', W);
+  canvas.setAttribute('height', H);
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+  const max = Math.max(...data, 1);
+  const barW = Math.floor(W / data.length) - 2;
+  data.forEach((val, i) => {
+    const x = i * (barW + 2) + 1;
+    const barH = Math.round((val / max) * (H - 24));
+    const y = H - barH - 20;
+    ctx.fillStyle = 'rgba(248,81,73,0.7)';
+    ctx.fillRect(x, y, barW, barH);
+    if (i % 4 === 0) {
+      ctx.fillStyle = '#8b949e';
+      ctx.font = '9px sans-serif';
+      ctx.fillText(labels[i], x, H - 4);
+    }
+  });
+}
+
+// ---- Minimal doughnut chart (SVG, no external dependencies) ----
+function drawDoughnut(canvasId, data, labels, colors) {
+  const canvas = $(canvasId);
+  const W = canvas.offsetWidth || 300, H = 180;
+  canvas.setAttribute('width', W);
+  canvas.setAttribute('height', H);
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+  const cx = W / 2 - 40, cy = H / 2, r = 70, inner = 40;
+  const total = data.reduce((a, b) => a + b, 0) || 1;
+  let start = -Math.PI / 2;
+  data.forEach((val, i) => {
+    const angle = (val / total) * 2 * Math.PI;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, start, start + angle);
+    ctx.closePath();
+    ctx.fillStyle = colors[i];
+    ctx.fill();
+    start += angle;
+  });
+  // inner white circle (doughnut hole)
+  ctx.beginPath();
+  ctx.arc(cx, cy, inner, 0, 2 * Math.PI);
+  ctx.fillStyle = '#161b22';
+  ctx.fill();
+  // legend
+  labels.forEach((lbl, i) => {
+    const lx = W - 80, ly = 30 + i * 22;
+    ctx.fillStyle = colors[i];
+    ctx.fillRect(lx, ly, 12, 12);
+    ctx.fillStyle = '#e6edf3';
+    ctx.font = '11px sans-serif';
+    ctx.fillText(lbl + ': ' + data[i], lx + 16, ly + 10);
+  });
+}
+
+const hours = Array.from({length: 24}, (_, i) => i + ':00');
+let hourBuckets = new Array(24).fill(0);
+let sevData = [0, 0, 0];
+
+function redrawCharts() {
+  drawBarChart('chart-alerts', hourBuckets, hours);
+  drawDoughnut('chart-severity', sevData, ['High','Medium','Low'], ['#f85149','#d29922','#3fb950']);
+}
+redrawCharts();
+let _resizeTimer;
+window.addEventListener('resize', function () {
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(redrawCharts, 150);
+});
+
+// ---- SIEM JSON loader ----
+$('load-siem').addEventListener('change', function (e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (ev) {
+    const lines = ev.target.result.split('\n').filter(Boolean);
+    const events = lines.map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    let alertsToday = 0, susProcs = 0, fileChanges = 0;
+    hourBuckets = new Array(24).fill(0);
+    sevData = [0, 0, 0];
+    const alertList = [];
+
+    events.forEach(ev => {
+      const ts = new Date(ev.timestamp);
+      if (ev.timestamp && ev.timestamp.startsWith(todayStr)) alertsToday++;
+      if (ev.event_type === 'SuspiciousProcess') susProcs++;
+      if (ev.event_type === 'FileChange') fileChanges++;
+      if (!isNaN(ts)) hourBuckets[ts.getHours()]++;
+      if (ev.severity === 'High')        sevData[0]++;
+      else if (ev.severity === 'Medium') sevData[1]++;
+      else                               sevData[2]++;
+      if (alertList.length < 30) alertList.push(ev);
+    });
+
+    $('kpi-alerts').textContent = alertsToday;
+    $('kpi-procs').textContent  = susProcs;
+    $('kpi-files').textContent  = fileChanges;
+    $('kpi-siem').textContent   = events.length;
+
+    redrawCharts();
+
+    const al = $('alert-list');
+    al.innerHTML = '';
+    alertList.slice().reverse().forEach(ev => {
+      const row = document.createElement('div');
+      row.className = 'alert-row';
+      const cls = ev.severity === 'High' ? 'high' : ev.severity === 'Medium' ? 'medium' : 'low';
+      const tsStr = new Date(ev.timestamp).toLocaleTimeString('pl-PL');
+      const detail = ev.data && ev.data.name ? ev.data.name : (ev.data && ev.data.path ? ev.data.path : '');
+      row.innerHTML = '<span class="dot ' + cls + '"></span><b>[' + escHtml(tsStr) + ']</b>&nbsp;' +
+                      escHtml(ev.event_type) + '&nbsp;—&nbsp;' + escHtml(detail);
+      al.appendChild(row);
+    });
+    renderRoadmap();
+    updateTime();
+  };
+  reader.readAsText(file);
+});
+
+// ---- Dynamic Roadmap ----
+function generateDynamicRoadmap() {
+  const roadmap = [];
+  const alerts  = parseInt($('kpi-alerts').textContent, 10) || 0;
+  const procs   = parseInt($('kpi-procs').textContent,  10) || 0;
+  const files   = parseInt($('kpi-files').textContent,  10) || 0;
+  const siem    = parseInt($('kpi-siem').textContent,   10) || 0;
+
+  if (procs > 0) {
+    roadmap.push('Zbadaj ' + procs + ' podejrzany(-ch) proces(-y) wykryt(-ych) w systemie');
+  } else {
+    roadmap.push('Brak podejrzanych procesów – utrzymuj regularny monitoring');
+  }
+
+  if (files > 0) {
+    roadmap.push('Przejrzyj ' + files + ' zmian(-ę/-y) plików i potwierdź ich legalność');
+  } else {
+    roadmap.push('Brak zmian plików – rozważ uruchomienie skanowania folderów');
+  }
+
+  if (alerts > 5) {
+    roadmap.push('Wysoka liczba alertów (' + alerts + ') – rozważ wzmocnienie reguł detekcji');
+  } else if (alerts > 0) {
+    roadmap.push('Przeanalizuj ' + alerts + ' alert(-ów/-y) z dzisiejszego dnia');
+  } else {
+    roadmap.push('Brak alertów dziś – sprawdź poprawność konfiguracji monitoringu');
+  }
+
+  if (sevData[0] > 0) {
+    roadmap.push('Priorytet: obsłuż ' + sevData[0] + ' zdarzenie(-nia) o krytyczności HIGH');
+  }
+  if (sevData[1] > 0) {
+    roadmap.push('Przejrzyj ' + sevData[1] + ' zdarzenie(-nia) o krytyczności MEDIUM');
+  }
+
+  if (siem > 0) {
+    roadmap.push('Wyeksportuj ' + siem + ' zdarzeń(-enie) SIEM do systemu SIEM/SOAR');
+  } else {
+    roadmap.push('Załaduj plik siem.json, aby uzyskać pełną analizę zdarzeń');
+  }
+
+  roadmap.push('Zaktualizuj whitelist procesów i folderów zgodnie z ostatnimi zmianami');
+  roadmap.push('Zweryfikuj klucze API (VirusTotal, Discord) i certyfikaty alertów e-mail');
+
+  return roadmap;
+}
+
+function renderRoadmap() {
+  let output = '\n🗺 Dynamiczna Roadmapa:\n';
+  const dynamicRoadmap = generateDynamicRoadmap();
+  dynamicRoadmap.forEach((r, i) => {
+    output += `${i+1}. ${r}\n`;
+  });
+
+  const box = $('roadmap-box');
+  box.innerHTML = '';
+  output.split('\n').filter(line => line && !line.startsWith('🗺')).forEach(line => {
+    const el = document.createElement('div');
+    el.textContent = line;
+    box.appendChild(el);
+  });
+}
+renderRoadmap();
+
+// ---- Log file loader ----
+$('load-log').addEventListener('change', function (e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (ev) {
+    const lines = ev.target.result.split('\n').filter(Boolean).slice(-200);
+    const box = $('log-box');
+    box.innerHTML = '';
+    lines.slice().reverse().forEach(line => {
+      const lower = line.toLowerCase();
+      const parts = line.split('\t');
+      const entry = document.createElement('div');
+      entry.className = 'entry';
+      const isSuspect = lower.includes('suspect') || lower.includes('error');
+      const isWarn    = lower.includes('warning') || lower.includes('rotated');
+      const cls = isSuspect ? 'text-danger' : isWarn ? 'text-warning' : '';
+      const ts   = escHtml(parts[0] || '');
+      const body = escHtml(parts.slice(1).join('\t') || line);
+      entry.innerHTML = '<span class="ts">' + ts + '</span><span class="' + cls + '">' + body + '</span>';
+      box.appendChild(entry);
+    });
+    updateTime();
+  };
+  reader.readAsText(file);
+});
+</script>
+</body>
+</html>
