@@ -1,0 +1,25 @@
+name: Hardening Dry-Run Test
+
+on:
+  pull_request:
+    branches:
+      - secure/hardening-safe-alerts
+  workflow_dispatch:
+
+jobs:
+  dryrun-redaction:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PowerShell
+        uses: actions/setup-powershell@v2
+
+      - name: Run dry-run redaction tests
+        shell: pwsh
+        # No network calls; no secrets used in this job
+        run: |
+          ./tests/dryrun-redaction.ps1
