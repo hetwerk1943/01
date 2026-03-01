@@ -1,0 +1,21 @@
+{
+  "name": "ultra-security-monitor",
+  "version": "1.0.0",
+  "description": "Ultra Security Monitor – real-time security dashboard and audit tool",
+  "main": "dashboard.html",
+  "scripts": {
+    "lint": "eslint .",
+    "test": "node --test test/"
+  },
+  "keywords": [
+    "security",
+    "monitor",
+    "dashboard",
+    "siem"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.57.0"
+  }
+}
