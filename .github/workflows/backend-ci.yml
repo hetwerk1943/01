@@ -1,0 +1,11 @@
+name: Backend CI
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v3
+      - name: Placeholder build step
+        run: echo 'Build backend (future)'

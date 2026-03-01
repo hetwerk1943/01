@@ -1,0 +1,17 @@
+openapi: 3.1.0
+info:
+  title: Ultra Security Monitor API
+  version: 1.0.0
+paths:
+  /alerts:
+    get:
+      summary: Pobiera alerty z agenta
+      responses:
+        '200':
+          description: Lista alertów
+  /license:
+    post:
+      summary: Weryfikacja licencji enterprise
+      responses:
+        '200':
+          description: Status licencji

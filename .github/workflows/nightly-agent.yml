@@ -1,0 +1,46 @@
+name: 🌙 Nightly Master Agent
+
+on:
+  schedule:
+    # Codziennie o 02:00 UTC (03:00 CET)
+    - cron: '0 2 * * *'
+  workflow_dispatch: # pozwala ręczne uruchomienie
+
+jobs:
+  nightly-agent:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      VT_API_KEY: ${{ secrets.VT_API_KEY }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # pełna historia git
+
+      - name: Set up PowerShell
+        uses: actions/setup-powershell@v2
+
+      - name: Run Master Agent Script
+        shell: pwsh
+        run: |
+          Write-Host "🌙 Uruchamiam nocnego agenta SaaS..." -ForegroundColor Cyan
+          ./masterAgent-nightly.ps1
+
+      - name: Commit & Push Changes
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Nightly update: sponsor section, audit, backups" || Write-Host "No changes to commit"
+          git push origin main || Write-Host "Push failed, likely no changes"
+
+      - name: Send Slack Notification (Optional)
+        if: ${{ env.SLACK_WEBHOOK_URL != '' }}
+        shell: pwsh
+        run: |
+          $payload = @{ text = "🌙 Nocny agent zakończył pracę. Audyt i backup gotowe." } | ConvertTo-Json
+          Invoke-RestMethod -Uri $env:SLACK_WEBHOOK_URL -Method Post -Body $payload -ContentType "application/json"
