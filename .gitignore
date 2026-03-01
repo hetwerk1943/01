@@ -1,0 +1,50 @@
+# ============================================================
+# .gitignore – Ultra Security Monitor (PowerShell / Security)
+# ============================================================
+
+# ----- Runtime log & report artifacts -----
+*.log
+security.log
+security-report.txt
+
+# ----- SIEM output -----
+SIEM/
+siem.json
+
+# ----- Backup directories -----
+backup_logs/
+Backup/
+
+# ----- License files (customer data – do NOT commit real keys) -----
+licenses/customer_*.json
+licenses/*.key
+licenses/*.private.json
+
+# ----- Environment / secret files -----
+.env
+*.env
+config.json
+secrets.json
+whitelist.json
+
+# ----- Editor / IDE -----
+.vscode/
+.idea/
+*.suo
+*.user
+
+# ----- OS artifacts -----
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# ----- Build / package artifacts -----
+node_modules/
+dist/
+*.zip
+*.bak
+*.tmp
+
+# ----- PowerShell temp -----
+*.ps1xml
+profile.ps1

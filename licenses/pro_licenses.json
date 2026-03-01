@@ -1,0 +1,9 @@
+[
+  {
+    "licenseKey": "HASHED_KEY_REPLACE_WITH_SHA256_OF_ACTUAL_KEY",
+    "type": "PRO",
+    "expires": "2026-12-31",
+    "issuedTo": "example@example.com",
+    "features": ["advanced_alerts", "siem_export", "virustotal_integration"]
+  }
+]
