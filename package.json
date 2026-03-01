@@ -1,0 +1,12 @@
+{
+  "name": "ultra-security-monitor",
+  "version": "1.1.0",
+  "description": "Ultra Security Monitor – dashboard and AI agent served locally",
+  "scripts": {
+    "start": "http-server . -p 8080 --cors",
+    "test": "node --test tests/logic.test.mjs"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

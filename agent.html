@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src https://cdn.jsdelivr.net 'self'; style-src 'unsafe-inline'; connect-src https://api.github.com;" />
+  <title>Ultra Repo AI Agent</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.js"
+          integrity="sha384-G436+Z2nlA8+PNoeRvWdxKbvOf8E/y+lYxqht2iBwNHTQDV5CJr3+AGVj8fGZi5t"
+          crossorigin="anonymous"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background: #f4f6f8;
+      color: #24292e;
+    }
+    h1 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+    h2 { font-size: 1.1rem; margin-bottom: 0.75rem; color: #0366d6; }
+    .section {
+      background: #fff;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+      border: 1px solid #e1e4e8;
+    }
+    .input-section label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
+    .input-row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    input[type="text"] {
+      padding: 0.5rem 0.75rem;
+      width: 400px;
+      max-width: 100%;
+      border: 1px solid #d1d5da;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      background: #0366d6;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+    button:hover { background: #0256b4; }
+    pre {
+      background: #f6f8fa;
+      border: 1px solid #e1e4e8;
+      border-radius: 4px;
+      padding: 0.75rem;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 320px;
+      overflow-y: auto;
+      margin-bottom: 0.75rem;
+    }
+    canvas { max-height: 200px; }
+  </style>
+</head>
+<body>
+  <h1>🤖 Ultra Repo AI Agent</h1>
+
+  <div class="section input-section">
+    <label for="repoUrl">GitHub Repository URL</label>
+    <div class="input-row">
+      <input type="text" id="repoUrl" placeholder="https://github.com/user/repo" aria-label="GitHub repository URL">
+      <button id="loadRepoBtn">Load Repo</button>
+      <button id="modeBtn">Mode: Calm</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>📂 Repo Analysis</h2>
+    <pre id="analysisOutput" aria-live="polite">Load a repo and click Analyze.</pre>
+    <button id="analyzeBtn">Run Analysis</button>
+  </div>
+
+  <div class="section">
+    <h2>🤖 Agent Decision</h2>
+    <pre id="decisionOutput" aria-live="polite"></pre>
+  </div>
+
+  <div class="section">
+    <h2>📊 AI Confidence Trend</h2>
+    <canvas id="scoreChart" width="400" height="200" aria-label="AI Confidence chart"></canvas>
+  </div>
+
+  <div class="section">
+    <h2>🚀 Pull Request</h2>
+    <button id="prBtn">Generate Pull Request</button>
+  </div>
+
+  <script src="agent.js"></script>
+</body>
+</html>
