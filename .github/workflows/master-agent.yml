@@ -8,6 +8,8 @@ on:
 jobs:
   nightly-agent:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       VT_API_KEY: ${{ secrets.VT_API_KEY }}
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
