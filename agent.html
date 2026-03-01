@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ultra Security Monitor – AI Agent</title>
+  <style>
+    :root {
+      --bg:      #0d1117;
+      --card:    #161b22;
+      --border:  #30363d;
+      --text:    #e6edf3;
+      --muted:   #8b949e;
+      --accent:  #58a6ff;
+      --danger:  #f85149;
+      --warning: #d29922;
+      --success: #3fb950;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header h1 { font-size: 18px; font-weight: 600; }
+    header .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #000;
+      font-weight: 600;
+    }
+    main { padding: 24px; max-width: 1000px; margin: 0 auto; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--accent);
+    }
+    .input-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    input[type="text"] {
+      flex: 1;
+      min-width: 260px;
+      padding: 7px 12px;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    input[type="text"]::placeholder { color: var(--muted); }
+    button {
+      padding: 7px 16px;
+      cursor: pointer;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: opacity 0.15s;
+    }
+    button:hover { opacity: 0.85; }
+    button.btn-warning { background: var(--warning); }
+    button.btn-success { background: var(--success); }
+    pre {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 320px;
+      overflow-y: auto;
+      margin-bottom: 8px;
+    }
+    canvas { max-height: 200px; width: 100%; }
+    .risk-high    { color: var(--danger); font-weight: 700; }
+    .risk-medium  { color: var(--warning); font-weight: 700; }
+    .risk-low     { color: var(--success); font-weight: 700; }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 11px;
+      padding: 24px;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🤖 Ultra Security Monitor – AI Agent</h1>
+  <span class="badge">AI</span>
+</header>
+
+<main>
+
+  <!-- Repo Input -->
+  <div class="card">
+    <div class="section-title">GitHub Repository</div>
+    <div class="input-row">
+      <input type="text" id="repoUrl" placeholder="https://github.com/user/repo"
+             aria-label="GitHub repository URL" />
+      <button id="loadRepoBtn">Load Repo</button>
+      <button id="modeBtn" class="btn-warning">Mode: Calm</button>
+    </div>
+  </div>
+
+  <!-- Analysis -->
+  <div class="card">
+    <div class="section-title">📂 Repo Analysis</div>
+    <pre id="analysisOutput" aria-live="polite">Load a repository and click Run Analysis.</pre>
+    <button id="analyzeBtn">Run Analysis</button>
+  </div>
+
+  <!-- Decision -->
+  <div class="card">
+    <div class="section-title">🤖 Agent Decision</div>
+    <pre id="decisionOutput" aria-live="polite"></pre>
+  </div>
+
+  <!-- Confidence Trend -->
+  <div class="card">
+    <div class="section-title">📊 AI Confidence Trend</div>
+    <canvas id="scoreChart" aria-label="AI Confidence trend chart"></canvas>
+  </div>
+
+  <!-- Pull Request -->
+  <div class="card">
+    <div class="section-title">🚀 Pull Request</div>
+    <button id="prBtn" class="btn-success">Generate Pull Request</button>
+  </div>
+
+</main>
+
+<footer>Ultra Security Monitor – Total Edition &nbsp;|&nbsp; AI Agent v1.0</footer>
+
+<script>
+// =========================
+// CONSTANTS
+// =========================
+// Each detected issue reduces the AI confidence score by this percentage.
+const ISSUE_PENALTY = 7;
+// Minimum confidence floor – prevents overly pessimistic scores regardless of issue count.
+const MIN_CONFIDENCE = 40;
+
+// =========================
+// GLOBAL STATE
+// =========================
+let repoFiles = [];
+let securityIssues = [];
+let refactorSuggestions = [];
+let history = JSON.parse(localStorage.getItem("agentHistory") || "[]");
+let scoreHistory = JSON.parse(localStorage.getItem("scoreHistory") || "[]");
+let agentMode = "calm";
+let currentRisk = { level: "LOW", score: 0 };
+let chartInstance = null;
+
+// =========================
+// GITHUB FETCH
+// =========================
+async function loadRepo() {
+  const url = document.getElementById("repoUrl").value.trim();
+  if (!url.startsWith("https://github.com/")) {
+    alert("Please enter a valid GitHub repository URL.");
+    return;
+  }
+  const parts = url.replace("https://github.com/", "").split("/").filter(Boolean);
+  if (parts.length < 2) {
+    alert("URL must include both owner and repository name, e.g. https://github.com/user/repo");
+    return;
+  }
+  const owner = encodeURIComponent(parts[0]);
+  const repo  = encodeURIComponent(parts[1]);
+  try {
+    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents`);
+    const remaining = response.headers.get("X-RateLimit-Remaining");
+    if (remaining !== null && Number(remaining) === 0) {
+      const reset = response.headers.get("X-RateLimit-Reset");
+      const resetTime = reset ? new Date(Number(reset) * 1000).toLocaleTimeString() : "soon";
+      alert(`GitHub API rate limit reached. Resets at ${resetTime}.`);
+      return;
+    }
+    if (!response.ok) {
+      alert(`GitHub API error: ${response.status} ${response.statusText}`);
+      return;
+    }
+    const data = await response.json();
+    if (Array.isArray(data)) {
+      repoFiles = data.map(f => f.name);
+      securityIssues = repoFiles
+        .filter(f => f === ".env" || f.endsWith(".env"))
+        .map(f => `Sensitive file committed: ${f}`);
+      refactorSuggestions = [];
+      alert("Repo loaded \u2705 \u2013 now click Run Analysis.");
+    } else {
+      alert("Could not read repo contents.");
+    }
+  } catch (err) {
+    alert("Connection error: " + err.message);
+  }
+}
+
+// =========================
+// DEEP SCAN
+// =========================
+function deepRepoScan() {
+  const findings = [];
+  const recommended = [".gitignore", "package.json", ".eslintrc"];
+  recommended.forEach(f => {
+    if (!repoFiles.includes(f)) findings.push(`Missing file: ${f}`);
+  });
+  if (!repoFiles.some(f => f.toLowerCase().includes("test"))) findings.push("No tests found");
+  if (!repoFiles.includes("Dockerfile")) findings.push("No Dockerfile");
+  return findings;
+}
+
+// =========================
+// SECURITY ENGINE
+// =========================
+function securityRiskEngine() {
+  let risk = securityIssues.length * 2;
+  if (!repoFiles.includes(".gitignore")) risk += 1;
+  if (risk >= 6) return { level: "HIGH", score: risk };
+  if (risk >= 3) return { level: "MEDIUM", score: risk };
+  return { level: "LOW", score: risk };
+}
+
+// =========================
+// MATURITY
+// =========================
+function repoMaturityLevel() {
+  let score = 0;
+  if (repoFiles.includes("Dockerfile")) score += 2;
+  if (repoFiles.some(f => f.toLowerCase().includes("test"))) score += 2;
+  if (repoFiles.includes(".gitignore")) score += 1;
+  if (repoFiles.includes("package.json")) score += 1;
+  if (score <= 2) return "PROTOTYPE \uD83D\uDEA7";
+  if (score <= 4) return "STARTUP \uD83D\uDE80";
+  if (score <= 5) return "GROWTH \uD83D\uDCC8";
+  return "ENTERPRISE \uD83C\uDFE2";
+}
+
+// =========================
+// CONFIDENCE
+// =========================
+function aiConfidence() {
+  const issues = securityIssues.length + deepRepoScan().length;
+  return Math.max(100 - issues * ISSUE_PENALTY, MIN_CONFIDENCE);
+}
+
+// =========================
+// ROADMAP
+// =========================
+function generateDynamicRoadmap() {
+  const steps = [];
+  if (securityIssues.length > 0) steps.push("Fix security issues");
+  deepRepoScan().forEach(f => steps.push(`Resolve: ${f}`));
+  if (refactorSuggestions.length > 0) steps.push("Refactor: " + refactorSuggestions.join(", "));
+  if (steps.length === 0) steps.push("Add CI/CD pipeline and automated tests");
+  return steps;
+}
+
+// =========================
+// ANALYSIS
+// =========================
+function runAnalysis() {
+  if (repoFiles.length === 0) {
+    alert("Load a repository first.");
+    return;
+  }
+  let output = "\uD83D\uDCC2 Repo Files:\n";
+  repoFiles.forEach(f => (output += `  - ${f}\n`));
+
+  const findings = deepRepoScan();
+  output += "\n\uD83E\uDDE0 Deep Scan:\n";
+  if (findings.length === 0) {
+    output += "  \u2705 No issues found\n";
+  } else {
+    findings.forEach(f => (output += `  \u26A0\uFE0F ${f}\n`));
+  }
+
+  currentRisk = securityRiskEngine();
+  output += `\n\uD83D\uDD10 Security Risk: ${currentRisk.level} (score: ${currentRisk.score})\n`;
+  output += `\n\uD83C\uDFE2 Maturity: ${repoMaturityLevel()}\n`;
+  output += `\n\uD83E\uDDE0 AI Confidence: ${aiConfidence()}%\n`;
+
+  const productionReady =
+    repoFiles.includes("Dockerfile") &&
+    repoFiles.some(f => f.toLowerCase().includes("test")) &&
+    securityIssues.length === 0;
+  output += `\n\uD83D\uDE80 Production Status: ${productionReady ? "READY \u2705" : "NOT READY \u274C"}\n`;
+
+  output += "\n\uD83D\uDDFA Roadmap:\n";
+  generateDynamicRoadmap().forEach((r, i) => (output += `  ${i + 1}. ${r}\n`));
+
+  document.getElementById("analysisOutput").textContent = output;
+  saveScoreTrend(aiConfidence());
+  drawChart();
+  runDecisionMaking();
+}
+
+// =========================
+// DECISION ENGINE
+// =========================
+function runDecisionMaking() {
+  let recommendation;
+  if (currentRisk.level === "HIGH") recommendation = "Fix SECURITY ISSUES IMMEDIATELY";
+  else if (refactorSuggestions.length > 0) recommendation = "Perform refactoring";
+  else recommendation = "Add CI/CD and tests";
+
+  if (agentMode === "aggressive") recommendation = "\u26A0\uFE0F PRIORITY: " + recommendation.toUpperCase();
+
+  history.push(recommendation);
+  if (history.length > 20) history.shift();
+  localStorage.setItem("agentHistory", JSON.stringify(history));
+
+  document.getElementById("decisionOutput").textContent =
+    `\uD83E\uDD16 ${recommendation}\n\n\uD83D\uDCDC History:\n` +
+    history.map((h, i) => `  ${i + 1}. ${h}`).join("\n");
+}
+
+// =========================
+// PR GENERATOR
+// =========================
+function generatePullRequest() {
+  let pr = "### \uD83E\uDD16 AI Repo Improvements\n\n";
+  generateDynamicRoadmap().forEach(s => (pr += `- ${s}\n`));
+  pr += `\nConfidence: ${aiConfidence()}%`;
+  return pr;
+}
+
+function showPR() {
+  if (repoFiles.length === 0) {
+    alert("Load and analyze a repository first.");
+    return;
+  }
+  alert(generatePullRequest());
+}
+
+// =========================
+// MODE TOGGLE
+// =========================
+function toggleMode() {
+  agentMode = agentMode === "calm" ? "aggressive" : "calm";
+  document.getElementById("modeBtn").textContent =
+    `Mode: ${agentMode.charAt(0).toUpperCase() + agentMode.slice(1)}`;
+}
+
+// =========================
+// TREND & CHART (no CDN – plain canvas)
+// =========================
+function saveScoreTrend(score) {
+  scoreHistory.push(score);
+  if (scoreHistory.length > 20) scoreHistory.shift();
+  localStorage.setItem("scoreHistory", JSON.stringify(scoreHistory));
+}
+
+function drawChart() {
+  const canvas = document.getElementById("scoreChart");
+  if (!canvas) return;
+  const W = canvas.offsetWidth || 600, H = 180;
+  canvas.setAttribute("width", W);
+  canvas.setAttribute("height", H);
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, W, H);
+  // Guard: need at least 2 points to draw a meaningful line
+  if (scoreHistory.length < 2) return;
+
+  const pad = 30;
+  const chartW = W - pad * 2;
+  const chartH = H - pad * 2;
+
+  // axes
+  ctx.strokeStyle = "#30363d";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad, pad);
+  ctx.lineTo(pad, H - pad);
+  ctx.lineTo(W - pad, H - pad);
+  ctx.stroke();
+
+  // line
+  ctx.strokeStyle = "#58a6ff";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  scoreHistory.forEach((val, i) => {
+    const x = pad + (i / (scoreHistory.length - 1)) * chartW;
+    const y = H - pad - (val / 100) * chartH;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // dots + labels
+  scoreHistory.forEach((val, i) => {
+    const x = pad + (i / (scoreHistory.length - 1)) * chartW;
+    const y = H - pad - (val / 100) * chartH;
+    ctx.fillStyle = "#58a6ff";
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.fillStyle = "#8b949e";
+    ctx.font = "9px sans-serif";
+    ctx.fillText(`${val}%`, x - 8, y - 6);
+  });
+
+  // y-axis label
+  ctx.save();
+  ctx.translate(10, H / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = "#8b949e";
+  ctx.font = "10px sans-serif";
+  ctx.fillText("Confidence %", -30, 0);
+  ctx.restore();
+}
+
+if (scoreHistory.length > 0) drawChart();
+window.addEventListener("resize", function () { drawChart(); });
+
+// =========================
+// EVENT LISTENERS
+// =========================
+document.getElementById("loadRepoBtn").addEventListener("click", loadRepo);
+document.getElementById("modeBtn").addEventListener("click", toggleMode);
+document.getElementById("analyzeBtn").addEventListener("click", runAnalysis);
+document.getElementById("prBtn").addEventListener("click", showPR);
+</script>
+</body>
+</html>
