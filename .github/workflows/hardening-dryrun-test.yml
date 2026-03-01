@@ -1,0 +1,22 @@
+name: Hardening Dry-Run Tests
+
+on:
+  pull_request:
+    branches:
+      - secure/hardening-safe-alerts
+  workflow_dispatch:
+
+jobs:
+  dryrun-redaction:
+    name: Run dry-run redaction tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run dryrun-redaction tests (no network, no secrets required)
+        shell: pwsh
+        run: |
+          ./tests/dryrun-redaction.ps1
