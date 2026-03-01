@@ -1,0 +1,10 @@
+{
+  "name": "Ultra Security Monitor",
+  "short_name": "USM",
+  "description": "Ultra Security Monitor – real-time security dashboard and AI repo agent",
+  "start_url": "/dashboard.html",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#58a6ff",
+  "lang": "pl"
+}
