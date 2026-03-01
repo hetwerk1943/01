@@ -204,4 +204,18 @@ Ultra Security Monitor – Total Edition to pełny system ochrony i monitoringu,
 - **Alerty w czasie rzeczywistym** (Discord, e-mail)
 - **Dashboard HTML/JS** z wizualizacją trendów i historią alertów
 
-Dzięki temu systemowi masz w rękach profesjonalne narzędzie bezpieczeństwa, które działa w tle, nie ingerując w codzienną pracę użytkownika, a jednocześnie chroni system w czasie rzeczywistym.
+MIT License
+
+Copyright (c) 2026 LifeHub Team
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
