@@ -1,0 +1,36 @@
+name: Hardening Dry-Run Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - secure/hardening-safe-alerts
+
+jobs:
+  dryrun-redaction:
+    name: Validate redaction in dry-run mode
+    runs-on: ubuntu-latest
+    # Minimal permissions – this job makes zero external network calls.
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PowerShell
+        # pwsh is pre-installed on ubuntu-latest; this step is a no-op
+        # but kept for explicitness and forward compatibility.
+        shell: bash
+        run: pwsh --version
+
+      - name: Run dry-run redaction tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Write-Host "Running tests/dryrun-redaction.ps1 ..."
+          & "$env:GITHUB_WORKSPACE/tests/dryrun-redaction.ps1"
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Dry-run redaction tests FAILED (exit code $LASTEXITCODE)"
+            exit $LASTEXITCODE
+          }
