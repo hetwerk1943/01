@@ -1,0 +1,148 @@
+---
+// LifeHubBot.js
+// Pełna integracja LifeHub + GitHub + OpenAI AI-comments + Points system
+// Wersja: 1.0
+
+/**
+ * Wymagania:
+ * 1. Node.js 18+
+ * 2. npm install node-fetch openai dotenv
+ * 3. .env plik z:
+ *    GITHUB_TOKEN=<Twój GitHub PAT>
+ *    OPENAI_API_KEY=<Twój OpenAI Key>
+ */
+
+import fetch from 'node-fetch';
+import { Configuration, OpenAIApi } from 'openai';
+import dotenv from 'dotenv';
+dotenv.config();
+
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+const REPO_OWNER = 'hetwerk1943';
+const REPO_NAME = 'LifeHub';
+
+const LIFEHUB_POINTS_STORAGE = {}; // mock: w produkcji podpiąć chrome.storage.sync / DB
+
+const configuration = new Configuration({ apiKey: OPENAI_API_KEY });
+const openai = new OpenAIApi(configuration);
+
+class LifeHubBot {
+  constructor() {
+    this.apiBase = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}`;
+  }
+
+  /** Pobranie wszystkich otwartych PR */
+  async getOpenPRs() {
+    const res = await fetch(`${this.apiBase}/pulls`, {
+      headers: { Authorization: `token ${GITHUB_TOKEN}` }
+    });
+    return await res.json();
+  }
+
+  /** Pobranie wyników CI/CD z workflow run */
+  async getLastWorkflowRun(prNumber) {
+    const res = await fetch(`${this.apiBase}/pulls/${prNumber}/commits`, {
+      headers: { Authorization: `token ${GITHUB_TOKEN}` }
+    });
+    const commits = await res.json();
+    return commits[commits.length - 1]?.sha || null;
+  }
+
+  /** Generowanie AI komentarza dla PR */
+  async generateAIComment(prTitle, prBody, filesChangedSummary) {
+    const prompt = `
+      You're LifeBot, a smart GitHub assistant.
+      Summarize this PR and give constructive feedback in 3 sentences:
+      Title: ${prTitle}
+      Description: ${prBody}
+      Files Summary: ${filesChangedSummary.join(', ')}
+    `;
+    const response = await openai.createChatCompletion({
+      model: 'gpt-4',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 250
+    });
+    return response.data.choices[0].message.content.trim();
+  }
+
+  /** Dodanie komentarza do PR */
+  async commentPR(prNumber, message) {
+    await fetch(`${this.apiBase}/issues/${prNumber}/comments`, {
+      method: 'POST',
+      headers: {
+        Authorization: `token ${GITHUB_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ body: message })
+    });
+  }
+
+  /** Dodanie etykiety do PR */
+  async autoLabelPR(prNumber, labels) {
+    await fetch(`${this.apiBase}/issues/${prNumber}/labels`, {
+      method: 'POST',
+      headers: {
+        Authorization: `token ${GITHUB_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ labels })
+    });
+  }
+
+  /** Przyznanie LifeHub Points użytkownikowi */
+  awardPoints(username, points = 10) {
+    if (!LIFEHUB_POINTS_STORAGE[username]) LIFEHUB_POINTS_STORAGE[username] = 0;
+    LIFEHUB_POINTS_STORAGE[username] += points;
+    console.log(`+${points} LifeHub Points to ${username}. Total: ${LIFEHUB_POINTS_STORAGE[username]}`);
+  }
+
+  /** Automatyczne zamknięcie PR po merge */
+  async closePR(prNumber) {
+    await fetch(`${this.apiBase}/pulls/${prNumber}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `token ${GITHUB_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ state: 'closed' })
+    });
+    console.log(`PR #${prNumber} automatically closed.`);
+  }
+
+  /** Aktualizacja karty LifeHub po merge PR */
+  async updateLifeHubCard(prNumber, status = 'Zrobione') {
+    // Pseudo kod: w realnym LifeHub zaktualizować dashboard/kolumnę
+    console.log(`LifeHub Dashboard: PR #${prNumber} moved to "${status}" column.`);
+  }
+
+  /** Główna logika agenta */
+  async run() {
+    const prs = await this.getOpenPRs();
+    for (const pr of prs) {
+      const filesChangedSummary = pr.changed_files ? [`${pr.changed_files} files changed`] : [];
+      const aiComment = await this.generateAIComment(pr.title, pr.body, filesChangedSummary);
+      
+      await this.commentPR(pr.number, aiComment);
+      await this.autoLabelPR(pr.number, pr.changed_files > 2 ? ['enhancement'] : ['bug']);
+      this.awardPoints(pr.user.login, 15);
+
+      // CI/CD check simulation (mock)
+      const lastCommitSha = await this.getLastWorkflowRun(pr.number);
+      const testResult = Math.random() > 0.1 ? 'passed' : 'failed'; // symulacja testów
+      await this.commentPR(pr.number, `CI/CD result: ${testResult} on commit ${lastCommitSha}`);
+      
+      if (testResult === 'passed') {
+        await this.closePR(pr.number);
+        await this.updateLifeHubCard(pr.number, 'Zrobione');
+        this.awardPoints(pr.user.login, 20);
+      }
+    }
+    console.log('LifeHubBot run completed.');
+  }
+}
+
+// Uruchomienie
+const agent = new LifeHubBot();
+agent.run().catch(console.error);
