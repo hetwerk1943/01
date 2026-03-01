@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ultra Security Monitor – Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+<header>
+  <h1>🛡️ Ultra Security Monitor</h1>
+  <span class="badge" id="status-badge">AKTYWNY</span>
+  <span class="last-update" id="last-update"></span>
+</header>
+
+<main>
+  <!-- KPI cards -->
+  <div class="grid">
+    <div class="card">
+      <div class="label">Alerty (dziś)</div>
+      <div class="value danger" id="kpi-alerts">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Podejrzane procesy</div>
+      <div class="value warning" id="kpi-procs">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Zmiany plików</div>
+      <div class="value" id="kpi-files">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Zdarzenia SIEM</div>
+      <div class="value success" id="kpi-siem">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Repo Maturity Level</div>
+      <div class="value" id="kpi-maturity" style="font-size:18px;">—</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="two-col">
+    <div class="card">
+      <div class="section-title">Aktywność alertów (ostatnie 24h)</div>
+      <canvas id="chart-alerts"></canvas>
+    </div>
+    <div class="card">
+      <div class="section-title">Zdarzenia SIEM według ważności</div>
+      <canvas id="chart-severity"></canvas>
+    </div>
+  </div>
+
+  <!-- Recent alerts -->
+  <div class="two-col">
+    <div class="card" style="grid-column: span 1;">
+      <div class="section-title">Ostatnie alerty</div>
+      <div id="alert-list">
+        <div class="alert-row"><span class="dot high"></span><span>Brak danych — załaduj plik siem.json</span></div>
+      </div>
+    </div>
+    <!-- Log viewer -->
+    <div class="card" style="grid-column: span 1;">
+      <div class="section-title">Log zabezpieczeń</div>
+      <div class="log-box" id="log-box">
+        <div class="entry text-info">Załaduj plik security.log za pomocą przycisku poniżej.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- File loader -->
+  <div class="card" style="margin-top: 16px;">
+    <div class="section-title">Załaduj dane lokalne</div>
+    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:8px;">
+      <label style="cursor:pointer;">
+        <input type="file" id="load-log" accept=".log,.txt" style="display:none" />
+        <span style="padding:6px 14px; background:var(--accent); color:#000; border-radius:6px; font-weight:600; font-size:12px;">
+          📄 Załaduj security.log
+        </span>
+      </label>
+      <label style="cursor:pointer;">
+        <input type="file" id="load-siem" accept=".json" style="display:none" />
+        <span style="padding:6px 14px; background:var(--warning); color:#000; border-radius:6px; font-weight:600; font-size:12px;">
+          📊 Załaduj siem.json
+        </span>
+      </label>
+    </div>
+  </div>
+</main>
+
+<footer>Ultra Security Monitor – Total Edition &nbsp;|&nbsp; Dashboard v1.0</footer>
+
+<script src="dashboard.js"></script>
+</body>
+</html>
