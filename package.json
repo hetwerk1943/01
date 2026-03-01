@@ -1,0 +1,16 @@
+{
+  "name": "ultra-security-monitor",
+  "version": "1.0.0",
+  "description": "Ultra Security Monitor – dashboard and AI agent served locally",
+  "scripts": {
+    "start": "http-server . -p 8080 --cors",
+    "test": "jest --testPathPattern=test/"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "jest": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "node"
+  }
+}

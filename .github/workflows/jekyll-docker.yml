@@ -1,0 +1,48 @@
+name: Project CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Run tests
+      run: npm test
+
+    - name: Check required HTML files exist
+      run: |
+        for f in dashboard.html agent.html web/repo-agent/index.html web/joke-generator/index.html; do
+          if [ ! -f "$f" ]; then
+            echo "❌ Missing required file: $f" && exit 1
+          else
+            echo "✅ $f"
+          fi
+        done
+
+    - name: Check required PowerShell scripts exist
+      run: |
+        for f in UltraSecurityMonitor.ps1 masterAgent.ps1 Audit-Project.ps1; do
+          if [ ! -f "$f" ]; then
+            echo "❌ Missing required file: $f" && exit 1
+          else
+            echo "✅ $f"
+          fi
+        done
