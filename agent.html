@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ultra Repo AI Agent</title>
+  <style>
+    :root {
+      --bg:      #0d1117;
+      --card:    #161b22;
+      --border:  #30363d;
+      --text:    #e6edf3;
+      --muted:   #8b949e;
+      --accent:  #58a6ff;
+      --danger:  #f85149;
+      --warning: #d29922;
+      --success: #3fb950;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header h1 { font-size: 18px; font-weight: 600; }
+    main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--accent);
+    }
+    .input-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    input[type="text"] {
+      flex: 1;
+      min-width: 200px;
+      padding: 7px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 13px;
+    }
+    input[type="text"]:focus { outline: 2px solid var(--accent); }
+    button {
+      padding: 7px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    #loadRepoBtn  { background: var(--accent);   color: #000; }
+    #analyzeBtn   { background: var(--success);  color: #000; }
+    #prBtn        { background: var(--warning);  color: #000; }
+    #modeBtn      { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+    .output-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      min-height: 120px;
+      max-height: 320px;
+      overflow-y: auto;
+      color: var(--text);
+    }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+    canvas { max-height: 200px; width: 100%; }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 11px;
+      padding: 24px;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>🤖 Ultra Repo AI Agent</h1>
+</header>
+
+<main>
+  <!-- Repo loader -->
+  <div class="card">
+    <div class="section-title">Load GitHub Repository</div>
+    <div class="input-row">
+      <input type="text" id="repoUrl" placeholder="https://github.com/owner/repo" />
+      <button id="loadRepoBtn">Load Repo</button>
+      <button id="modeBtn">Mode: Calm</button>
+      <button id="analyzeBtn">Run Analysis</button>
+      <button id="prBtn">Generate PR</button>
+    </div>
+  </div>
+
+  <!-- Analysis & Decision outputs -->
+  <div class="two-col">
+    <div class="card">
+      <div class="section-title">Repository Analysis</div>
+      <pre id="analysisOutput" class="output-box">Load a repository and click Run Analysis.</pre>
+    </div>
+    <div class="card">
+      <div class="section-title">Agent Decisions &amp; Recommendations</div>
+      <pre id="decisionOutput" class="output-box">Recommendations will appear here after analysis.</pre>
+    </div>
+  </div>
+
+  <!-- Score trend chart -->
+  <div class="card">
+    <div class="section-title">AI Confidence Trend</div>
+    <canvas id="scoreChart"></canvas>
+  </div>
+</main>
+
+<footer>Ultra Security Monitor – Total Edition &nbsp;|&nbsp; AI Agent v1.0</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="web/repo-agent/app.js"></script>
+</body>
+</html>
