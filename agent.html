@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ultra Repo AI Agent – MCP</title>
+  <style>
+    :root {
+      --bg:      #0d1117;
+      --card:    #161b22;
+      --border:  #30363d;
+      --text:    #e6edf3;
+      --muted:   #8b949e;
+      --accent:  #58a6ff;
+      --danger:  #f85149;
+      --warning: #d29922;
+      --success: #3fb950;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header h1 { font-size: 18px; font-weight: 600; }
+    header .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #000;
+      font-weight: 600;
+    }
+    header nav { margin-left: auto; display: flex; gap: 16px; }
+    header nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+    }
+    header nav a:hover { color: var(--accent); }
+    main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--accent);
+    }
+    .input-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .input-row input[type="text"] {
+      flex: 1;
+      min-width: 220px;
+      padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 14px;
+    }
+    .input-row input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    button {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-primary:hover:not(:disabled) { opacity: .85; }
+    .btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+    .btn-secondary:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .mode-toggle { display: flex; align-items: center; gap: 8px; }
+    .mode-toggle label { color: var(--muted); font-size: 12px; }
+    .toggle-wrap {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 22px;
+    }
+    .toggle-wrap input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      inset: 0;
+      background: var(--border);
+      border-radius: 22px;
+      cursor: pointer;
+      transition: .3s;
+    }
+    .slider::before {
+      content: '';
+      position: absolute;
+      width: 16px; height: 16px;
+      left: 3px; top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: .3s;
+    }
+    input:checked + .slider { background: var(--danger); }
+    input:checked + .slider::before { transform: translateX(22px); }
+    .grid-kpi {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      margin-bottom: 16px;
+    }
+    .kpi-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .kpi-box .lbl { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+    .kpi-box .val { font-size: 24px; font-weight: 700; margin-top: 2px; }
+    .val.danger  { color: var(--danger); }
+    .val.warning { color: var(--warning); }
+    .val.success { color: var(--success); }
+    .val.info    { color: var(--accent); }
+    .issue-list { list-style: none; padding: 0; }
+    .issue-list li {
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .issue-list li:last-child { border-bottom: none; }
+    .tag {
+      display: inline-block;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-weight: 600;
+      margin-right: 6px;
+    }
+    .tag.high    { background: var(--danger);  color: #000; }
+    .tag.medium  { background: var(--warning); color: #000; }
+    .tag.low     { background: var(--success); color: #000; }
+    .tag.info    { background: var(--accent);  color: #000; }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+    canvas { max-height: 200px; }
+    pre.pr-output {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 320px;
+      overflow-y: auto;
+      color: var(--text);
+    }
+    .history-entry {
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .history-entry:last-child { border-bottom: none; }
+    .history-entry strong { color: var(--text); }
+    .status-bar {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+      min-height: 18px;
+    }
+    .status-bar.error { color: var(--danger); }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 11px;
+      padding: 24px;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>🤖 Ultra Repo AI Agent</h1>
+  <span class="badge">MCP</span>
+  <nav>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="agent.html">Agent</a>
+  </nav>
+</header>
+
+<main>
+  <!-- Input -->
+  <div class="card">
+    <div class="section-title">Analiza repozytorium GitHub</div>
+    <div class="input-row">
+      <input type="text" id="repo-input" placeholder="owner/repo  (np. hetwerk1943/Ultra-Security-Monitor)" />
+      <button class="btn-primary" id="btn-analyze">🔍 Analizuj</button>
+      <button class="btn-secondary" id="btn-gen-pr" disabled>📝 Generuj PR</button>
+      <div class="mode-toggle">
+        <label>Tryb agenta:</label>
+        <span style="font-size:12px;color:var(--success)">Spokojny</span>
+        <label class="toggle-wrap">
+          <input type="checkbox" id="mode-toggle" />
+          <span class="slider"></span>
+        </label>
+        <span style="font-size:12px;color:var(--danger)">Agresywny</span>
+      </div>
+    </div>
+    <div class="status-bar" id="status-bar"></div>
+  </div>
+
+  <!-- KPI -->
+  <div class="grid-kpi" id="kpi-grid" style="display:none">
+    <div class="kpi-box">
+      <div class="lbl">Ryzyko bezpieczeństwa</div>
+      <div class="val" id="kpi-risk">—</div>
+    </div>
+    <div class="kpi-box">
+      <div class="lbl">Dojrzałość</div>
+      <div class="val info" id="kpi-maturity">—</div>
+    </div>
+    <div class="kpi-box">
+      <div class="lbl">Pewność AI</div>
+      <div class="val" id="kpi-confidence">—</div>
+    </div>
+    <div class="kpi-box">
+      <div class="lbl">Znalezione problemy</div>
+      <div class="val warning" id="kpi-issues">—</div>
+    </div>
+  </div>
+
+  <!-- Scan results + Chart -->
+  <div class="two-col" id="results-grid" style="display:none">
+    <div class="card">
+      <div class="section-title">🔎 Deep Scan – wyniki</div>
+      <ul class="issue-list" id="issue-list"></ul>
+    </div>
+    <div class="card">
+      <div class="section-title">📈 Historia pewności AI</div>
+      <canvas id="chart-confidence"></canvas>
+    </div>
+  </div>
+
+  <!-- Recommendation -->
+  <div class="card" id="rec-card" style="display:none">
+    <div class="section-title">🧠 Rekomendacja agenta</div>
+    <p id="recommendation" style="font-size:13px;"></p>
+  </div>
+
+  <!-- PR output -->
+  <div class="card" id="pr-card" style="display:none">
+    <div class="section-title">📋 Opis Pull Requesta (Markdown)</div>
+    <pre class="pr-output" id="pr-output"></pre>
+  </div>
+
+  <!-- Decision history -->
+  <div class="card">
+    <div class="section-title">📜 Historia decyzji (ostatnie 20)</div>
+    <div id="decision-history">
+      <div class="history-entry">Brak historii – uruchom analizę.</div>
+    </div>
+  </div>
+</main>
+
+<footer>Ultra Security Monitor – Total Edition &nbsp;|&nbsp; Repo AI Agent v1.0</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script>
+'use strict';
+
+// ── Constants ──────────────────────────────────────────────────────────────
+const ISSUE_PENALTY         = 7;   // % confidence deducted per issue
+const MIN_CONFIDENCE        = 40;  // floor %
+const MAX_SCORE_HIST        = 50;  // score history entries cap in localStorage
+const MAX_DEC_HIST          = 20;  // decision history entries cap
+const MEDIUM_RISK_THRESHOLD = 1;   // medCount must exceed this value for MEDIUM risk
+
+const IMPORTANT_FILES = [
+  { name: '.gitignore',  type: 'missing-gitignore',  label: 'Brak .gitignore',    severity: 'high'   },
+  { name: 'package.json', type: 'missing-packagejson', label: 'Brak package.json', severity: 'medium' },
+  { name: '.eslintrc',   type: 'missing-eslintrc',   label: 'Brak .eslintrc',     severity: 'medium' },
+  { name: 'Dockerfile',  type: 'missing-dockerfile', label: 'Brak Dockerfile',    severity: 'low'    },
+];
+
+const ENV_SAFE_FILES   = ['.env.example', '.env.template'];
+const ENV_DANGER_FILE  = '.env';
+const TEST_PATTERNS    = ['test', 'spec', '__tests__', 'tests'];
+
+// Maturity thresholds (based on weighted signal count)
+const MATURITY_LEVELS = [
+  { min: 7, label: 'ENTERPRISE', cls: 'success' },
+  { min: 4, label: 'GROWTH',    cls: 'success'  },
+  { min: 2, label: 'STARTUP',   cls: 'warning'  },
+  { min: 0, label: 'PROTOTYPE', cls: 'danger'   },
+];
+
+// ── State ──────────────────────────────────────────────────────────────────
+let scoreChart     = null;
+let lastAnalysis   = null;
+
+// ── DOM helpers ────────────────────────────────────────────────────────────
+function $(id) { return document.getElementById(id); }
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function setStatus(msg, isError) {
+  const bar = $('status-bar');
+  bar.textContent = msg;
+  bar.className   = 'status-bar' + (isError ? ' error' : '');
+}
+
+// ── Analysis engine ────────────────────────────────────────────────────────
+function analyseFiles(files) {
+  const names        = files.map(f => f.name.toLowerCase());
+  const securityIssues    = [];
+  const refactorSuggestions = [];
+
+  // Deep scan – missing important files
+  IMPORTANT_FILES.forEach(({ name, type, label, severity }) => {
+    if (!names.includes(name.toLowerCase())) {
+      (severity === 'high' ? securityIssues : refactorSuggestions)
+        .push({ type, label, severity });
+    }
+  });
+
+  // Security: committed .env file is a risk
+  if (names.includes(ENV_DANGER_FILE)) {
+    securityIssues.push({
+      type: 'committed-env',
+      label: 'Plik .env zatwierdzony do repozytorium (wyciek sekretów!)',
+      severity: 'high',
+    });
+  }
+
+  // Security: no safe env template present
+  const hasSafeEnv = ENV_SAFE_FILES.some(f => names.includes(f));
+  if (!hasSafeEnv) {
+    refactorSuggestions.push({
+      type: 'missing-env-template',
+      label: 'Brak .env.example / .env.template – dodaj wzorzec konfiguracji',
+      severity: 'low',
+    });
+  }
+
+  // Deep scan: no tests
+  const hasTests = names.some(n => TEST_PATTERNS.some(p => n.includes(p)));
+  if (!hasTests) {
+    refactorSuggestions.push({ type: 'missing-tests', label: 'Brak katalogu testów', severity: 'medium' });
+  }
+
+  const allIssues   = [...securityIssues, ...refactorSuggestions];
+  const issueCount  = allIssues.length;
+  const confidence  = Math.max(100 - issueCount * ISSUE_PENALTY, MIN_CONFIDENCE);
+
+  // Security risk level
+  const highCount   = allIssues.filter(i => i.severity === 'high').length;
+  const medCount    = allIssues.filter(i => i.severity === 'medium').length;
+  const riskLevel   = highCount > 0 ? 'HIGH' : medCount > MEDIUM_RISK_THRESHOLD ? 'MEDIUM' : 'LOW';
+
+  // Maturity signals (weighted)
+  const maturitySignals = [
+    names.includes('.gitignore'),
+    names.includes('package.json') || names.includes('requirements.txt') || names.includes('go.mod'),
+    names.includes('dockerfile')   || names.includes('.dockerignore'),
+    hasTests,
+    names.includes('readme.md')    || names.includes('readme'),
+    names.includes('license')      || names.includes('license.md'),
+    names.includes('.github')      || names.includes('.travis.yml') || names.includes('ci.yml'),
+    names.includes('.eslintrc')    || names.includes('.eslintrc.js') || names.includes('.eslintrc.json'),
+    hasSafeEnv,
+  ].filter(Boolean).length;
+
+  const maturity = MATURITY_LEVELS.find(m => maturitySignals >= m.min) || MATURITY_LEVELS[MATURITY_LEVELS.length - 1];
+
+  return { allIssues, issueCount, confidence, riskLevel, maturity };
+}
+
+// ── Recommendation text ────────────────────────────────────────────────────
+function buildRecommendation(result, repo, aggressive) {
+  const { riskLevel, maturity, issueCount } = result;
+  if (aggressive) {
+    if (riskLevel === 'HIGH')
+      return `🚨 KRYTYCZNE: "${repo}" ma ${issueCount} poważnych problemów. Natychmiastowe działanie wymagane – to repozytorium NIE powinno być publiczne!`;
+    if (riskLevel === 'MEDIUM')
+      return `⚠️ OSTRZEŻENIE: "${repo}" (${maturity.label}) wymaga pilnych poprawek. Nie uruchamiaj w produkcji bez ich wdrożenia.`;
+    return `✅ "${repo}" (${maturity.label}) jest w akceptowalnym stanie. Drobne usprawnienia zwiększą jakość.`;
+  }
+  if (riskLevel === 'HIGH')
+    return `Repozytorium "${repo}" wymaga pilnej uwagi: wykryto ${issueCount} problemów bezpieczeństwa. Zalecane natychmiastowe działania.`;
+  if (riskLevel === 'MEDIUM')
+    return `Repozytorium "${repo}" (${maturity.label}) wymaga kilku poprawek przed wdrożeniem produkcyjnym.`;
+  return `Repozytorium "${repo}" (${maturity.label}) jest w dobrym stanie. Rozważ drobne usprawnienia.`;
+}
+
+// ── PR description generator ──────────────────────────────────────────────
+function generatePRDescription(repo, result) {
+  const { allIssues, riskLevel, maturity, confidence } = result;
+  const now  = new Date().toISOString().slice(0, 10);
+  const lines = [
+    `## 🤖 AI-Generated Improvement Roadmap`,
+    ``,
+    `**Repo:** \`${repo}\`  `,
+    `**Date:** ${now}  `,
+    `**Risk:** ${riskLevel} | **Maturity:** ${maturity.label} | **Confidence:** ${confidence}%`,
+    ``,
+    `### Issues detected`,
+    ...allIssues.map(i => `- [${i.severity.toUpperCase()}] ${i.label}`),
+    ``,
+    `### Recommended actions`,
+  ];
+
+  if (allIssues.some(i => i.type === 'missing-gitignore'))
+    lines.push('- Add a `.gitignore` tailored to your stack');
+  if (allIssues.some(i => i.type === 'committed-env'))
+    lines.push('- Remove `.env` from version control and rotate any exposed secrets immediately');
+  if (allIssues.some(i => i.type === 'missing-env-template'))
+    lines.push('- Add `.env.example` with placeholder values for required environment variables');
+  if (allIssues.some(i => i.type === 'missing-tests'))
+    lines.push('- Add a `tests/` or `__tests__/` directory with at least smoke tests');
+  if (allIssues.some(i => i.type === 'missing-dockerfile'))
+    lines.push('- Add a `Dockerfile` to enable containerised deployments');
+  if (allIssues.some(i => i.type === 'missing-eslintrc'))
+    lines.push('- Add ESLint configuration to enforce code-style consistency');
+  if (allIssues.some(i => i.type === 'missing-packagejson'))
+    lines.push('- Add a `package.json` (or equivalent) to declare project dependencies');
+
+  lines.push('');
+  lines.push('---');
+  lines.push('*Generated by Ultra Repo AI Agent*');
+
+  return lines.join('\n');
+}
+
+// ── Chart ──────────────────────────────────────────────────────────────────
+function renderChart(history) {
+  if (scoreChart) {
+    scoreChart.destroy();
+    scoreChart = null;
+  }
+  const canvas = $('chart-confidence');
+  scoreChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: history.map((_, i) => `#${i + 1}`),
+      datasets: [{
+        label: 'Pewność AI (%)',
+        data: history,
+        backgroundColor: history.map(v =>
+          v >= 80 ? 'rgba(63,185,80,.7)' :
+          v >= 55 ? 'rgba(210,153,34,.7)' :
+                    'rgba(248,81,73,.7)'
+        ),
+        borderRadius: 3,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          min: 0, max: 100,
+          ticks: { color: '#8b949e', font: { size: 10 } },
+          grid: { color: 'rgba(48,54,61,.6)' },
+        },
+        x: { ticks: { color: '#8b949e', font: { size: 10 } }, grid: { display: false } },
+      },
+      plugins: { legend: { display: false } },
+    },
+  });
+}
+
+// ── localStorage helpers ───────────────────────────────────────────────────
+function loadScoreHistory(repo) {
+  try {
+    return JSON.parse(localStorage.getItem('scoreHistory_' + repo) || '[]');
+  } catch { return []; }
+}
+
+function saveScoreHistory(repo, history) {
+  const capped = history.slice(-MAX_SCORE_HIST);
+  localStorage.setItem('scoreHistory_' + repo, JSON.stringify(capped));
+  return capped;
+}
+
+function loadDecisionHistory() {
+  try {
+    return JSON.parse(localStorage.getItem('decisionHistory') || '[]');
+  } catch { return []; }
+}
+
+function saveDecisionHistory(entry) {
+  const hist = loadDecisionHistory();
+  hist.unshift(entry);
+  localStorage.setItem('decisionHistory', JSON.stringify(hist.slice(0, MAX_DEC_HIST)));
+}
+
+function renderDecisionHistory() {
+  const hist    = loadDecisionHistory();
+  const container = $('decision-history');
+  if (!hist.length) {
+    container.innerHTML = '<div class="history-entry">Brak historii – uruchom analizę.</div>';
+    return;
+  }
+  container.innerHTML = hist.map(h =>
+    `<div class="history-entry">` +
+    `<strong>${escHtml(h.repo)}</strong> — ` +
+    `${escHtml(h.risk)} | ${escHtml(h.maturity)} | ${h.confidence}% | ` +
+    `<span style="color:var(--muted)">${escHtml(h.ts)}</span>` +
+    `</div>`
+  ).join('');
+}
+
+// ── Main analysis flow ─────────────────────────────────────────────────────
+async function runAnalysis() {
+  const raw  = $('repo-input').value.trim();
+  const parts = raw.replace(/^https?:\/\/github\.com\//, '').split('/').filter(Boolean);
+
+  if (parts.length < 2) {
+    setStatus('Podaj repozytorium w formacie owner/repo', true);
+    return;
+  }
+
+  const repo = parts.slice(0, 2).join('/');
+  const url  = `https://api.github.com/repos/${repo}/contents/`;
+
+  setStatus('⏳ Pobieranie danych z GitHub API…');
+  $('btn-analyze').disabled = true;
+  $('btn-gen-pr').disabled  = true;
+
+  let files;
+  try {
+    const resp = await fetch(url, { headers: { Accept: 'application/vnd.github.v3+json' } });
+
+    const remaining = resp.headers.get('X-RateLimit-Remaining');
+    const reset     = resp.headers.get('X-RateLimit-Reset');
+    const resetStr  = reset
+      ? new Date(Number(reset) * 1000).toLocaleTimeString('pl-PL')
+      : '—';
+
+    if (!resp.ok) {
+      throw new Error(`HTTP ${resp.status} – ${resp.statusText}` +
+        (resp.status === 403 ? ` (limit API wyczerpany, reset: ${resetStr})` : ''));
+    }
+
+    files = await resp.json();
+    setStatus(`✅ Pobrano ${files.length} plików. Pozostały limit API: ${remaining ?? '?'} (reset: ${resetStr})`);
+  } catch (err) {
+    setStatus(String(err), true);
+    $('btn-analyze').disabled = false;
+    return;
+  }
+
+  const result     = analyseFiles(files);
+  const aggressive = $('mode-toggle').checked;
+
+  // Update KPI
+  $('kpi-grid').style.display     = '';
+  $('results-grid').style.display = '';
+  $('rec-card').style.display     = '';
+  $('pr-card').style.display      = 'none';
+
+  const riskCls = result.riskLevel === 'HIGH' ? 'danger' : result.riskLevel === 'MEDIUM' ? 'warning' : 'success';
+  $('kpi-risk').textContent       = result.riskLevel;
+  $('kpi-risk').className         = 'val ' + riskCls;
+  $('kpi-maturity').textContent   = result.maturity.label;
+  $('kpi-maturity').className     = 'val ' + result.maturity.cls;
+  $('kpi-confidence').textContent = result.confidence + '%';
+  $('kpi-confidence').className   = 'val ' + (result.confidence >= 80 ? 'success' : result.confidence >= 55 ? 'warning' : 'danger');
+  $('kpi-issues').textContent     = result.issueCount;
+
+  // Issue list
+  const ul = $('issue-list');
+  ul.innerHTML = '';
+  if (result.allIssues.length === 0) {
+    ul.innerHTML = '<li style="color:var(--success)">✅ Nie wykryto żadnych problemów!</li>';
+  } else {
+    result.allIssues.forEach(issue => {
+      const li = document.createElement('li');
+      li.innerHTML = `<span class="tag ${issue.severity}">${issue.severity.toUpperCase()}</span>${escHtml(issue.label)}`;
+      ul.appendChild(li);
+    });
+  }
+
+  // Recommendation
+  $('recommendation').textContent = buildRecommendation(result, repo, aggressive);
+
+  // Chart
+  const history = saveScoreHistory(repo, [...loadScoreHistory(repo), result.confidence]);
+  renderChart(history);
+
+  // Persist decision
+  saveDecisionHistory({
+    repo,
+    risk:       result.riskLevel,
+    maturity:   result.maturity.label,
+    confidence: result.confidence,
+    ts:         new Date().toLocaleString('pl-PL'),
+  });
+  renderDecisionHistory();
+
+  lastAnalysis = { repo, result };
+  $('btn-analyze').disabled = false;
+  $('btn-gen-pr').disabled  = false;
+}
+
+function showPR() {
+  if (!lastAnalysis) return;
+  const md = generatePRDescription(lastAnalysis.repo, lastAnalysis.result);
+  $('pr-output').textContent = md;
+  $('pr-card').style.display = '';
+  $('pr-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Event listeners ────────────────────────────────────────────────────────
+$('btn-analyze').addEventListener('click', runAnalysis);
+$('btn-gen-pr').addEventListener('click', showPR);
+$('repo-input').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') runAnalysis();
+});
+
+// ── Init ───────────────────────────────────────────────────────────────────
+renderDecisionHistory();
+
+// ── MCP server configuration (embedded reference) ─────────────────────────
+const MCP_CONFIG = {
+  servers: {
+    sentry:     { transport: 'stdio', command: 'npx', args: ['-y', '@sentry/mcp-server@latest'] },
+    notion:     { transport: 'stdio', command: 'npx', args: ['-y', '@notionhq/notion-mcp-server'] },
+    azure:      { transport: 'stdio', command: 'npx', args: ['-y', '@azure/mcp@latest'] },
+    cloudflare: { transport: 'stdio', command: 'npx', args: ['-y', 'mcp-remote', 'https://bindings.mcp.cloudflare.com/sse'] },
+    ado:        { transport: 'stdio', command: 'npx', args: ['-y', '@azure/mcp@latest', 'ado'] },
+    github:     { transport: 'stdio', command: 'npx', args: ['-y', '@modelcontextprotocol/server-github'] },
+  },
+};
+Object.freeze(MCP_CONFIG);
+</script>
+</body>
+</html>
