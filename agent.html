@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ultra Repo AI Agent</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background: #f4f6f8;
+      color: #24292e;
+    }
+    h1 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+    h2 { font-size: 1.1rem; margin-bottom: 0.75rem; color: #0366d6; }
+    .section {
+      background: #fff;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+      border: 1px solid #e1e4e8;
+    }
+    .input-section label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
+    .input-row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    input[type="text"] {
+      padding: 0.5rem 0.75rem;
+      width: 400px;
+      max-width: 100%;
+      border: 1px solid #d1d5da;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      background: #0366d6;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+    button:hover { background: #0256b4; }
+    pre {
+      background: #f6f8fa;
+      border: 1px solid #e1e4e8;
+      border-radius: 4px;
+      padding: 0.75rem;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 320px;
+      overflow-y: auto;
+      margin-bottom: 0.75rem;
+    }
+    canvas { max-height: 200px; }
+  </style>
+</head>
+<body>
+  <h1>🤖 Ultra Repo AI Agent</h1>
+
+  <div class="section input-section">
+    <label for="repoUrl">GitHub Repository URL</label>
+    <div class="input-row">
+      <input type="text" id="repoUrl" placeholder="https://github.com/user/repo" aria-label="GitHub repository URL">
+      <button id="loadRepoBtn">Load Repo</button>
+      <button id="modeBtn">Mode: Calm</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>📂 Repo Analysis</h2>
+    <pre id="analysisOutput" aria-live="polite">Load a repo and click Analyze.</pre>
+    <button id="analyzeBtn">Run Analysis</button>
+  </div>
+
+  <div class="section">
+    <h2>🤖 Agent Decision</h2>
+    <pre id="decisionOutput" aria-live="polite"></pre>
+  </div>
+
+  <div class="section">
+    <h2>📊 AI Confidence Trend</h2>
+    <canvas id="scoreChart" width="400" height="200" aria-label="AI Confidence chart"></canvas>
+  </div>
+
+  <div class="section">
+    <h2>🚀 Pull Request</h2>
+    <button id="prBtn">Generate Pull Request</button>
+  </div>
+
+  <script>
+    // =========================
+    // CONSTANTS
+    // =========================
+    const ISSUE_PENALTY = 7;
+    const MIN_CONFIDENCE = 40;
+
+    // =========================
+    // GLOBAL STATE
+    // =========================
+    let repoFiles = [];
+    let securityIssues = [];
+    let refactorSuggestions = [];
+    let history = JSON.parse(localStorage.getItem("agentHistory") || "[]");
+    let scoreHistory = JSON.parse(localStorage.getItem("scoreHistory") || "[]");
+    let agentMode = "calm";
+    let currentRisk = { level: "LOW", score: 0 };
+    let chartInstance = null;
+
+    // =========================
+    // GITHUB FETCH
+    // =========================
+    async function loadRepo() {
+      const url = document.getElementById("repoUrl").value.trim();
+      if (!url.startsWith("https://github.com/")) {
+        alert("Please enter a valid GitHub repository URL.");
+        return;
+      }
+      const parts = url.replace("https://github.com/", "").split("/").filter(Boolean);
+      if (parts.length < 2) {
+        alert("URL must include both owner and repository name, e.g. https://github.com/user/repo");
+        return;
+      }
+      const owner = encodeURIComponent(parts[0]);
+      const repo = encodeURIComponent(parts[1]);
+      try {
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents`);
+        const remaining = response.headers.get("X-RateLimit-Remaining");
+        if (remaining !== null && Number(remaining) === 0) {
+          const reset = response.headers.get("X-RateLimit-Reset");
+          const resetTime = reset ? new Date(Number(reset) * 1000).toLocaleTimeString() : "soon";
+          alert(`GitHub API rate limit reached. Resets at ${resetTime}.`);
+          return;
+        }
+        if (!response.ok) {
+          alert(`GitHub API error: ${response.status} ${response.statusText}`);
+          return;
+        }
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          repoFiles = data.map(f => f.name);
+          securityIssues = repoFiles
+            .filter(f => f === ".env" || f.endsWith(".env"))
+            .map(f => `Sensitive file committed: ${f}`);
+          refactorSuggestions = [];
+          alert("Repo loaded \u2705 \u2013 now click Run Analysis.");
+        } else {
+          alert("Could not read repo contents.");
+        }
+      } catch (err) {
+        alert("Connection error: " + err.message);
+      }
+    }
+
+    // =========================
+    // DEEP SCAN
+    // =========================
+    function deepRepoScan() {
+      const findings = [];
+      const recommended = [".gitignore", "package.json", ".eslintrc"];
+      recommended.forEach(f => {
+        if (!repoFiles.includes(f)) findings.push(`Missing file: ${f}`);
+      });
+      if (!repoFiles.some(f => f.toLowerCase().includes("test"))) findings.push("No tests found");
+      if (!repoFiles.includes("Dockerfile")) findings.push("No Dockerfile");
+      return findings;
+    }
+
+    // =========================
+    // SECURITY ENGINE
+    // =========================
+    function securityRiskEngine() {
+      let risk = securityIssues.length * 2;
+      if (!repoFiles.includes(".gitignore")) risk += 1;
+      if (risk >= 6) return { level: "HIGH", score: risk };
+      if (risk >= 3) return { level: "MEDIUM", score: risk };
+      return { level: "LOW", score: risk };
+    }
+
+    // =========================
+    // MATURITY
+    // =========================
+    function repoMaturityLevel() {
+      let score = 0;
+      if (repoFiles.includes("Dockerfile")) score += 2;
+      if (repoFiles.some(f => f.toLowerCase().includes("test"))) score += 2;
+      if (repoFiles.includes(".gitignore")) score += 1;
+      if (repoFiles.includes("package.json")) score += 1;
+      if (score <= 2) return "PROTOTYPE \uD83D\uDEA7";
+      if (score <= 4) return "STARTUP \uD83D\uDE80";
+      if (score <= 5) return "GROWTH \uD83D\uDCC8";
+      return "ENTERPRISE \uD83C\uDFE2";
+    }
+
+    // =========================
+    // CONFIDENCE
+    // =========================
+    function aiConfidence() {
+      const issues = securityIssues.length + deepRepoScan().length;
+      return Math.max(100 - issues * ISSUE_PENALTY, MIN_CONFIDENCE);
+    }
+
+    // =========================
+    // ROADMAP
+    // =========================
+    function generateDynamicRoadmap() {
+      const steps = [];
+      if (securityIssues.length > 0) steps.push("Fix security issues");
+      deepRepoScan().forEach(f => steps.push(`Resolve: ${f}`));
+      if (refactorSuggestions.length > 0) steps.push("Refactor: " + refactorSuggestions.join(", "));
+      if (steps.length === 0) steps.push("Add CI/CD pipeline and automated tests");
+      return steps;
+    }
+
+    // =========================
+    // ANALYSIS
+    // =========================
+    function runAnalysis() {
+      if (repoFiles.length === 0) {
+        alert("Load a repository first.");
+        return;
+      }
+      let output = "📂 Repo Files:\n";
+      repoFiles.forEach(f => (output += `  - ${f}\n`));
+
+      const findings = deepRepoScan();
+      output += "\n🧠 Deep Scan:\n";
+      if (findings.length === 0) {
+        output += "  ✅ No issues found\n";
+      } else {
+        findings.forEach(f => (output += `  ⚠️ ${f}\n`));
+      }
+
+      currentRisk = securityRiskEngine();
+      output += `\n🔐 Security Risk: ${currentRisk.level} (score: ${currentRisk.score})\n`;
+      output += `\n🏢 Maturity: ${repoMaturityLevel()}\n`;
+      output += `\n🧠 AI Confidence: ${aiConfidence()}%\n`;
+
+      const productionReady =
+        repoFiles.includes("Dockerfile") &&
+        repoFiles.some(f => f.toLowerCase().includes("test")) &&
+        securityIssues.length === 0;
+      output += `\n🚀 Production Status: ${productionReady ? "READY ✅" : "NOT READY ❌"}\n`;
+
+      output += "\n🗺 Roadmap:\n";
+      generateDynamicRoadmap().forEach((r, i) => (output += `  ${i + 1}. ${r}\n`));
+
+      document.getElementById("analysisOutput").textContent = output;
+      saveScoreTrend(aiConfidence());
+      drawChart();
+      runDecisionMaking();
+    }
+
+    // =========================
+    // DECISION ENGINE
+    // =========================
+    function runDecisionMaking() {
+      let recommendation;
+      if (currentRisk.level === "HIGH") recommendation = "Fix SECURITY ISSUES IMMEDIATELY";
+      else if (refactorSuggestions.length > 0) recommendation = "Perform refactoring";
+      else recommendation = "Add CI/CD and tests";
+
+      if (agentMode === "aggressive") recommendation = "⚠️ PRIORITY: " + recommendation.toUpperCase();
+
+      history.push(recommendation);
+      if (history.length > 100) history.shift();
+      localStorage.setItem("agentHistory", JSON.stringify(history));
+
+      document.getElementById("decisionOutput").textContent =
+        `🤖 ${recommendation}\n\n📜 History:\n` +
+        history.map((h, i) => `  ${i + 1}. ${h}`).join("\n");
+    }
+
+    // =========================
+    // PR GENERATOR
+    // =========================
+    function generatePullRequest() {
+      let pr = "### 🤖 AI Repo Improvements\n\n";
+      generateDynamicRoadmap().forEach(s => (pr += `- ${s}\n`));
+      pr += `\nConfidence: ${aiConfidence()}%`;
+      return pr;
+    }
+
+    function showPR() {
+      if (repoFiles.length === 0) {
+        alert("Load and analyze a repository first.");
+        return;
+      }
+      alert(generatePullRequest());
+    }
+
+    // =========================
+    // MODE TOGGLE
+    // =========================
+    function toggleMode() {
+      agentMode = agentMode === "calm" ? "aggressive" : "calm";
+      document.getElementById("modeBtn").textContent =
+        `Mode: ${agentMode.charAt(0).toUpperCase() + agentMode.slice(1)}`;
+    }
+
+    // =========================
+    // TREND & CHART
+    // =========================
+    function saveScoreTrend(score) {
+      scoreHistory.push(score);
+      if (scoreHistory.length > 100) scoreHistory.shift();
+      localStorage.setItem("scoreHistory", JSON.stringify(scoreHistory));
+    }
+
+    function drawChart() {
+      const ctx = document.getElementById("scoreChart").getContext("2d");
+      if (chartInstance) chartInstance.destroy();
+      const labels = scoreHistory.map((_, i) => `Run ${i + 1}`);
+      chartInstance = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [{
+            label: "AI Confidence (%)",
+            data: scoreHistory,
+            borderColor: "#0366d6",
+            backgroundColor: "rgba(3,102,214,0.1)",
+            tension: 0.3,
+            fill: true,
+          }],
+        },
+        options: {
+          scales: {
+            y: { min: 0, max: 100, title: { display: true, text: "Confidence %" } },
+          },
+          plugins: { legend: { display: true } },
+        },
+      });
+    }
+
+    if (scoreHistory.length > 0) drawChart();
+
+    // =========================
+    // EVENT LISTENERS
+    // =========================
+    document.getElementById("loadRepoBtn").addEventListener("click", loadRepo);
+    document.getElementById("modeBtn").addEventListener("click", toggleMode);
+    document.getElementById("analyzeBtn").addEventListener("click", runAnalysis);
+    document.getElementById("prBtn").addEventListener("click", showPR);
+  </script>
+</body>
+</html>
