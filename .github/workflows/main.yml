@@ -1,0 +1,38 @@
+name: Ultra Repo AI Agent Workflow
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:  # ręczne uruchomienie
+  push:
+    branches:
+      - main
+
+jobs:
+  serve-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install http-server
+        run: npm install -g http-server
+
+      - name: Start Agent Server
+        run: |
+          nohup http-server ./ -p 8080 & 
+          echo "Server running at http://localhost:8080/agent.html"
+          
+      - name: Test if agent.html exists
+        run: |
+          if [ -f agent.html ]; then
+            echo "✅ agent.html is present"
+          else
+            echo "❌ agent.html not found" && exit 1
+          fi
