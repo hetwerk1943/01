@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ultra Repo AI Agent + MCP</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg:      #0d1117;
+      --card:    #161b22;
+      --border:  #30363d;
+      --text:    #e6edf3;
+      --muted:   #8b949e;
+      --accent:  #58a6ff;
+      --danger:  #f85149;
+      --warning: #d29922;
+      --success: #3fb950;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header h1 { font-size: 18px; font-weight: 600; }
+    header .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #000;
+      font-weight: 600;
+    }
+    header nav { margin-left: auto; display: flex; gap: 16px; }
+    header nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+    }
+    header nav a:hover { color: var(--accent); }
+    main { padding: 24px; max-width: 1100px; margin: 0 auto; }
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
+    .input-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    input[type="text"] {
+      flex: 1 1 320px;
+      padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 13px;
+    }
+    input[type="text"]::placeholder { color: var(--muted); }
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    button {
+      padding: 7px 16px;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s;
+      white-space: nowrap;
+    }
+    button:hover { opacity: .85; }
+    button.secondary {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    button.secondary:hover { border-color: var(--accent); color: var(--accent); }
+    pre {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: 'Cascadia Code', Consolas, monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 320px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+    .badge-risk {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .badge-risk.HIGH   { background: var(--danger);  color: #fff; }
+    .badge-risk.MEDIUM { background: var(--warning); color: #000; }
+    .badge-risk.LOW    { background: var(--success); color: #000; }
+    canvas { max-height: 220px; }
+    .mcp-config {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: 'Cascadia Code', Consolas, monospace;
+      font-size: 11px;
+      color: var(--muted);
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 11px;
+      padding: 24px;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🤖 Ultra Repo AI Agent</h1>
+  <span class="badge">MCP</span>
+  <nav>
+    <a href="dashboard.html">← Dashboard</a>
+  </nav>
+</header>
+
+<main>
+
+  <!-- Input -->
+  <div class="section">
+    <div class="section-title">📦 GitHub Repository</div>
+    <label for="repoUrl">Repository URL</label>
+    <div class="input-row">
+      <input type="text" id="repoUrl" placeholder="https://github.com/owner/repo" aria-label="GitHub repository URL" />
+      <button id="loadRepoBtn">Load Repo</button>
+      <button class="secondary" id="modeBtn">Mode: Calm</button>
+    </div>
+  </div>
+
+  <!-- Analysis -->
+  <div class="section">
+    <div class="section-title">📂 Repo Analysis</div>
+    <pre id="analysisOutput" aria-live="polite">Load a repository and click Run Analysis.</pre>
+    <button id="analyzeBtn">▶ Run Analysis</button>
+  </div>
+
+  <!-- Decision -->
+  <div class="section">
+    <div class="section-title">🤖 Agent Decision</div>
+    <pre id="decisionOutput" aria-live="polite"></pre>
+  </div>
+
+  <!-- Chart -->
+  <div class="section">
+    <div class="section-title">📊 AI Confidence Trend</div>
+    <canvas id="scoreChart" aria-label="AI Confidence trend chart"></canvas>
+  </div>
+
+  <!-- Pull Request -->
+  <div class="section">
+    <div class="section-title">🚀 Pull Request Generator</div>
+    <pre id="prOutput" aria-live="polite">Run analysis first to generate a PR description.</pre>
+    <button id="prBtn">Generate Pull Request</button>
+  </div>
+
+  <!-- MCP Config -->
+  <div class="section">
+    <div class="section-title">⚙️ MCP Server Config</div>
+    <div class="mcp-config" id="mcpConfigDisplay"></div>
+  </div>
+
+</main>
+
+<footer>Ultra Security Monitor – Total Edition &nbsp;|&nbsp; Ultra Repo AI Agent + MCP</footer>
+
+<script>
+// =========================
+// MCP SERVER CONFIG
+// =========================
+const MCP_CONFIG = {
+  mcpServers: {
+    sentry:     { command: "npx", args: ["-y", "@sentry/mcp-server@latest"] },
+    notion:     { command: "npx", args: ["-y", "@notionhq/notion-mcp-server"] },
+    azure:      { command: "npx", args: ["-y", "@azure/mcp@latest"] },
+    cloudflare: { command: "npx", args: ["-y", "mcp-remote", "https://cloudflare.com/mcp"] },
+    ado:        { command: "npx", args: ["-y", "@azure-devops/mcp-server"] },
+    github:     { command: "npx", args: ["-y", "@github/mcp-server"] }
+  }
+};
+document.getElementById("mcpConfigDisplay").textContent =
+  JSON.stringify(MCP_CONFIG, null, 2);
+
+// =========================
+// CONSTANTS
+// =========================
+const ISSUE_PENALTY      = 7;   // confidence reduction per detected issue (%)
+const MIN_CONFIDENCE     = 40;  // floor for AI confidence score (%)
+const MAX_HISTORY        = 20;  // max decision history entries
+const MAX_SCORE_HISTORY  = 50;  // max score history entries
+
+// =========================
+// GLOBAL STATE
+// =========================
+let repoFiles          = [];
+let securityIssues     = [];
+let refactorSuggestions = [];
+let history            = JSON.parse(localStorage.getItem("agentHistory")  || "[]");
+let scoreHistory       = JSON.parse(localStorage.getItem("scoreHistory")  || "[]");
+let agentMode          = "calm";
+let currentRisk        = { level: "LOW", score: 0 };
+let chartInstance      = null;
+
+// =========================
+// GITHUB FETCH
+// =========================
+async function loadRepo() {
+  const url = document.getElementById("repoUrl").value.trim();
+  if (!url.startsWith("https://github.com/")) {
+    alert("Please enter a valid GitHub repository URL.");
+    return;
+  }
+  const parts = url.replace("https://github.com/", "").split("/").filter(Boolean);
+  if (parts.length < 2) {
+    alert("URL must include both owner and repository name, e.g. https://github.com/user/repo");
+    return;
+  }
+  const owner = encodeURIComponent(parts[0]);
+  const repo  = encodeURIComponent(parts[1]);
+  try {
+    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents`);
+    const remaining = response.headers.get("X-RateLimit-Remaining");
+    if (remaining !== null && Number(remaining) === 0) {
+      const reset     = response.headers.get("X-RateLimit-Reset");
+      const resetTime = reset ? new Date(Number(reset) * 1000).toLocaleTimeString() : "soon";
+      alert(`GitHub API rate limit reached. Resets at ${resetTime}.`);
+      return;
+    }
+    if (!response.ok) {
+      alert(`GitHub API error: ${response.status} ${response.statusText}`);
+      return;
+    }
+    const data = await response.json();
+    if (Array.isArray(data)) {
+      repoFiles          = data.map(f => f.name);
+      securityIssues     = repoFiles
+        .filter(f => f === ".env" || (f.startsWith(".env") && f !== ".env.example" && f !== ".env.template"))
+        .map(f => `Sensitive file committed: ${f}`);
+      refactorSuggestions = [];
+      document.getElementById("analysisOutput").textContent =
+        `✅ Repo loaded (${repoFiles.length} files). Click Run Analysis to continue.`;
+    } else {
+      alert("Could not read repo contents.");
+    }
+  } catch (err) {
+    alert("Connection error: " + err.message);
+  }
+}
+
+// =========================
+// DEEP SCAN
+// =========================
+function deepRepoScan() {
+  const findings  = [];
+  const required  = [".gitignore", "package.json"];
+  required.forEach(f => {
+    if (!repoFiles.includes(f)) findings.push(`Missing file: ${f}`);
+  });
+  const hasEslint = repoFiles.some(f => f.startsWith(".eslintrc") || f === "eslint.config.js");
+  if (!hasEslint) findings.push("Missing file: .eslintrc");
+  const hasTests = repoFiles.some(f =>
+    f === "__tests__" || f === "test" || f === "tests" ||
+    /\.(test|spec)\.[jt]sx?$/.test(f)
+  );
+  if (!hasTests) findings.push("No tests found");
+  if (!repoFiles.includes("Dockerfile")) findings.push("No Dockerfile");
+  return findings;
+}
+
+// =========================
+// SECURITY ENGINE
+// =========================
+function securityRiskEngine() {
+  let risk = securityIssues.length * 2;
+  if (!repoFiles.includes(".gitignore"))   risk += 1;
+  // Reward presence of env template files (good practice)
+  if (repoFiles.includes(".env.example") || repoFiles.includes(".env.template")) risk -= 1;
+  risk = Math.max(risk, 0);
+  if (risk >= 6) return { level: "HIGH",   score: risk };
+  if (risk >= 3) return { level: "MEDIUM", score: risk };
+  return             { level: "LOW",    score: risk };
+}
+
+// =========================
+// MATURITY
+// =========================
+function repoMaturityLevel() {
+  let score = 0;
+  if (repoFiles.includes("Dockerfile"))                                  score += 2;
+  const hasTests = repoFiles.some(f =>
+    f === "__tests__" || f === "test" || f === "tests" ||
+    /\.(test|spec)\.[jt]sx?$/.test(f)
+  );
+  if (hasTests)                                                          score += 2;
+  if (repoFiles.includes(".gitignore"))                                  score += 1;
+  if (repoFiles.includes("package.json"))                                score += 1;
+  if (repoFiles.some(f => f.startsWith(".eslintrc") || f === "eslint.config.js")) score += 1;
+  if (repoFiles.includes("README.md") || repoFiles.includes("README"))   score += 1;
+  if (score <= 2) return "PROTOTYPE 🚧";
+  if (score <= 4) return "STARTUP 🚀";
+  if (score <= 6) return "GROWTH 📈";
+  return "ENTERPRISE 🏢";
+}
+
+// =========================
+// CONFIDENCE
+// =========================
+function aiConfidence() {
+  const issueCount = securityIssues.length + deepRepoScan().length;
+  return Math.max(100 - issueCount * ISSUE_PENALTY, MIN_CONFIDENCE);
+}
+
+// =========================
+// ROADMAP
+// =========================
+function generateDynamicRoadmap() {
+  const steps = [];
+  if (securityIssues.length > 0) steps.push("Fix security issues (committed secrets detected)");
+  deepRepoScan().forEach(f => steps.push(`Resolve: ${f}`));
+  if (refactorSuggestions.length > 0) steps.push("Refactor: " + refactorSuggestions.join(", "));
+  if (steps.length === 0) steps.push("Add CI/CD pipeline and automated tests");
+  return steps;
+}
+
+// =========================
+// ANALYSIS
+// =========================
+function runAnalysis() {
+  if (repoFiles.length === 0) {
+    alert("Load a repository first.");
+    return;
+  }
+  let output = "📂 Repo Files:\n";
+  repoFiles.forEach(f => (output += `  - ${f}\n`));
+
+  const findings = deepRepoScan();
+  output += "\n🧠 Deep Scan:\n";
+  if (findings.length === 0) {
+    output += "  ✅ No issues found\n";
+  } else {
+    findings.forEach(f => (output += `  ⚠️  ${f}\n`));
+  }
+
+  currentRisk  = securityRiskEngine();
+  const conf   = aiConfidence();
+  const mature = repoMaturityLevel();
+
+  output += `\n🔐 Security Risk: ${currentRisk.level} (score: ${currentRisk.score})\n`;
+  output += `\n🏢 Maturity: ${mature}\n`;
+  output += `\n🎯 AI Confidence: ${conf}%\n`;
+
+  const productionReady =
+    repoFiles.includes("Dockerfile") &&
+    repoFiles.some(f =>
+      f === "__tests__" || f === "test" || f === "tests" ||
+      /\.(test|spec)\.[jt]sx?$/.test(f)
+    ) &&
+    securityIssues.length === 0;
+  output += `\n🚀 Production Status: ${productionReady ? "READY ✅" : "NOT READY ❌"}\n`;
+
+  output += "\n🗺️  Roadmap:\n";
+  generateDynamicRoadmap().forEach((r, i) => (output += `  ${i + 1}. ${r}\n`));
+
+  document.getElementById("analysisOutput").textContent = output;
+  saveScoreTrend(conf);
+  drawChart();
+  runDecisionMaking();
+}
+
+// =========================
+// DECISION ENGINE
+// =========================
+function runDecisionMaking() {
+  let recommendation;
+  if (currentRisk.level === "HIGH")       recommendation = "Fix SECURITY ISSUES IMMEDIATELY";
+  else if (refactorSuggestions.length > 0) recommendation = "Perform refactoring";
+  else                                     recommendation = "Add CI/CD and tests";
+
+  if (agentMode === "aggressive") recommendation = "⚠️ PRIORITY: " + recommendation.toUpperCase();
+
+  history.push(recommendation);
+  if (history.length > MAX_HISTORY) history.shift();
+  localStorage.setItem("agentHistory", JSON.stringify(history));
+
+  document.getElementById("decisionOutput").textContent =
+    `🤖 ${recommendation}\n\n📜 History:\n` +
+    history.map((h, i) => `  ${i + 1}. ${h}`).join("\n");
+}
+
+// =========================
+// PR GENERATOR
+// =========================
+function generatePullRequest() {
+  let pr = "### 🤖 AI Repo Improvements\n\n";
+  generateDynamicRoadmap().forEach(s => (pr += `- ${s}\n`));
+  pr += `\nConfidence: ${aiConfidence()}%`;
+  return pr;
+}
+
+function showPR() {
+  if (repoFiles.length === 0) {
+    alert("Load and analyze a repository first.");
+    return;
+  }
+  document.getElementById("prOutput").textContent = generatePullRequest();
+}
+
+// =========================
+// MODE TOGGLE
+// =========================
+function toggleMode() {
+  agentMode = agentMode === "calm" ? "aggressive" : "calm";
+  document.getElementById("modeBtn").textContent =
+    `Mode: ${agentMode.charAt(0).toUpperCase() + agentMode.slice(1)}`;
+}
+
+// =========================
+// TREND & CHART
+// =========================
+function saveScoreTrend(score) {
+  scoreHistory.push(score);
+  if (scoreHistory.length > MAX_SCORE_HISTORY) scoreHistory.shift();
+  localStorage.setItem("scoreHistory", JSON.stringify(scoreHistory));
+}
+
+function drawChart() {
+  const ctx = document.getElementById("scoreChart").getContext("2d");
+  if (chartInstance) chartInstance.destroy();
+  const labels = scoreHistory.map((_, i) => `Run ${i + 1}`);
+  chartInstance = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "AI Confidence (%)",
+        data: scoreHistory,
+        backgroundColor: scoreHistory.map(v =>
+          v >= 80 ? "rgba(63,185,80,0.7)"
+          : v >= 60 ? "rgba(88,166,255,0.7)"
+          : v >= 50 ? "rgba(210,153,34,0.7)"
+          : "rgba(248,81,73,0.7)"
+        ),
+        borderColor: "transparent",
+        borderRadius: 4
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          min: 0,
+          max: 100,
+          ticks: { color: "#8b949e" },
+          grid:  { color: "#30363d" },
+          title: { display: true, text: "Confidence %", color: "#8b949e" }
+        },
+        x: {
+          ticks: { color: "#8b949e" },
+          grid:  { color: "#30363d" }
+        }
+      },
+      plugins: {
+        legend: { labels: { color: "#e6edf3" } }
+      }
+    }
+  });
+}
+
+// Draw chart on load if history exists
+if (scoreHistory.length > 0) drawChart();
+
+// =========================
+// EVENT LISTENERS
+// =========================
+document.getElementById("loadRepoBtn").addEventListener("click", loadRepo);
+document.getElementById("modeBtn").addEventListener("click", toggleMode);
+document.getElementById("analyzeBtn").addEventListener("click", runAnalysis);
+document.getElementById("prBtn").addEventListener("click", showPR);
+</script>
+</body>
+</html>
