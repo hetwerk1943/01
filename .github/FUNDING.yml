@@ -1,0 +1,14 @@
+community:
+  github:
+    - "https://github.com/DominikOpalko"
+    - "https://github.com/UltraSecTeam"
+  discord:
+    - "https://discord.gg/yourserver"  # jeśli masz serwer
+  twitter:
+    - "https://twitter.com/YourProfile"
+  mastodon:
+    - "https://mastodon.social/@YourProfile"
+  website:
+    - "https://ultrasecuritymonitor.com"
+  documentation:
+    - "https://ultrasecuritymonitor.com/docs"
