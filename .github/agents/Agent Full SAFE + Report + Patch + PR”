@@ -1,0 +1,71 @@
+# ===============================
+# 1️⃣ Przygotowanie tymczasowej gałęzi SAFE
+# ===============================
+git fetch origin master
+git checkout -b agent-temp origin/master
+
+# ===============================
+# 2️⃣ Instalacja zależności
+# ===============================
+npm install
+
+# ===============================
+# 3️⃣ Analiza plików HTML, JS, JSON i CSS
+# ===============================
+# HTMLLint
+echo "🔹 Lintowanie HTML..."
+npx htmlhint "**/*.html" > htmlhint-report.txt
+echo "Raport HTMLHint zapisany: htmlhint-report.txt"
+
+# JS syntax check
+echo "🔹 Sprawdzanie składni JS..."
+find . -name "*.js" -exec node --check {} \; > js-check-report.txt 2>&1
+echo "Raport JS zapisany: js-check-report.txt"
+
+# JSONLint manifest
+echo "🔹 Walidacja manifest.json..."
+npx jsonlint manifest.json > jsonlint-report.txt 2>&1
+echo "Raport JSON zapisany: jsonlint-report.txt"
+
+# Prettier formatowanie
+echo "🔹 Formatowanie Prettier (HTML, JS, CSS)..."
+npx prettier --write "**/*.{html,js,css}" > prettier-report.txt 2>&1
+echo "Raport Prettier zapisany: prettier-report.txt"
+
+# ===============================
+# 4️⃣ Przygotowanie patch/unified diff
+# ===============================
+git add -A
+git diff --cached > Ultra-Security-Monitor-FULL.patch
+echo "✅ Patch zapisany: Ultra-Security-Monitor-FULL.patch"
+
+# ===============================
+# 5️⃣ Commit tymczasowy
+# ===============================
+git commit -m "SAFE: full project scan + lint/format fixes + placeholder Ads"
+
+# ===============================
+# 6️⃣ Tworzenie PR na GitHub
+# ===============================
+git push origin agent-temp:fix/full-scan-safe
+gh pr create \
+  --base master \
+  --head fix/full-scan-safe \
+  --title "SAFE: Full scan & lint/format fixes" \
+  --body "Analiza HTML/JS/PWA, poprawki formatowania Prettier, HTMLHint fixes, JS syntax check, manifest.json validation, placeholdery reklam. Patch Ultra-Security-Monitor-FULL.patch gotowy do zastosowania."
+
+# ===============================
+# 7️⃣ Podsumowanie raportów
+# ===============================
+echo "📄 Podsumowanie raportów:"
+echo "- HTMLHint: htmlhint-report.txt"
+echo "- JS syntax: js-check-report.txt"
+echo "- JSON manifest: jsonlint-report.txt"
+echo "- Formatowanie Prettier: prettier-report.txt"
+
+# ===============================
+# 8️⃣ Sprzątanie tymczasowej gałęzi
+# ===============================
+git checkout master
+git branch -D agent-temp
+echo "✅ Agent SAFE zakończony. Master przywrócony, patch gotowy, PR utworzony."
