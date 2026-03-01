@@ -1,0 +1,154 @@
+/* Lifestyle & Motivation Assessment – styles */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  background: #f0f4f8;
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  padding: 2rem 2.5rem;
+  max-width: 560px;
+  width: 100%;
+  text-align: center;
+}
+
+h1 {
+  font-size: 1.6rem;
+  margin-bottom: 0.5rem;
+  color: #24292e;
+}
+
+.subtitle {
+  color: #586069;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+/* Progress bar */
+#progress-bar-wrap {
+  background: #e1e4e8;
+  border-radius: 4px;
+  height: 8px;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+#progress-bar {
+  height: 100%;
+  background: #0366d6;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+#question-counter {
+  font-size: 0.8rem;
+  color: #586069;
+  margin-bottom: 0.5rem;
+}
+
+#question-text {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #24292e;
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+  min-height: 3rem;
+}
+
+#options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.option-btn {
+  padding: 0.65rem 1rem;
+  background: #f6f8fa;
+  border: 1px solid #d1d5da;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s, border-color 0.2s;
+  color: #24292e;
+}
+
+.option-btn:hover {
+  background: #e6f0ff;
+  border-color: #0366d6;
+}
+
+/* Result section */
+#result-section {
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+#result-emoji {
+  font-size: 3rem;
+  margin: 0.75rem 0;
+}
+
+#result-title {
+  font-size: 1.4rem;
+  color: #0366d6;
+  margin-bottom: 0.5rem;
+}
+
+#result-description {
+  color: #444;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+}
+
+#result-section h3 {
+  font-size: 1rem;
+  color: #24292e;
+  margin-bottom: 0.5rem;
+}
+
+#result-tips {
+  list-style: none;
+  text-align: left;
+  margin-bottom: 1.5rem;
+}
+
+#result-tips li {
+  padding: 0.35rem 0;
+  color: #444;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+#result-tips li::before {
+  content: "✔ ";
+  color: #0366d6;
+}
+
+button#restartBtn {
+  padding: 0.6rem 1.4rem;
+  background: #0366d6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+button#restartBtn:hover { background: #0256b4; }
