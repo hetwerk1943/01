@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ultra Repo AI Agent</title>
+  <style>
+    :root {
+      --bg:       #0d1117;
+      --card:     #161b22;
+      --border:   #30363d;
+      --text:     #e6edf3;
+      --muted:    #8b949e;
+      --accent:   #58a6ff;
+      --danger:   #f85149;
+      --warning:  #d29922;
+      --success:  #3fb950;
+      --teal:     #2a9d8f;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header h1 { font-size: 18px; font-weight: 600; }
+    header .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: var(--teal);
+      color: #fff;
+      font-weight: 600;
+    }
+    header .nav-link {
+      margin-left: auto;
+      color: var(--accent);
+      font-size: 12px;
+      text-decoration: none;
+    }
+    header .nav-link:hover { text-decoration: underline; }
+    main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+    .section-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: var(--accent); }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .card h2 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--accent); }
+    pre.output-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 80px;
+      color: var(--text);
+    }
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .score-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      text-align: center;
+    }
+    .score-card .score-label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 6px;
+    }
+    .score-card .score-value {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--teal);
+    }
+    .score-card .score-bar-bg {
+      background: var(--border);
+      border-radius: 4px;
+      height: 4px;
+      margin-top: 6px;
+    }
+    .score-card .score-bar {
+      height: 4px;
+      border-radius: 4px;
+      background: var(--teal);
+      transition: width 0.6s ease;
+    }
+    button {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .decision-box {
+      background: var(--bg);
+      border-left: 3px solid var(--teal);
+      border-radius: 0 6px 6px 0;
+      padding: 12px 16px;
+      font-size: 13px;
+      font-style: italic;
+      color: var(--text);
+      min-height: 48px;
+    }
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      margin: 2px;
+      font-weight: 600;
+    }
+    .tag.security  { background: rgba(248,81,73,.15); color: var(--danger); border: 1px solid var(--danger); }
+    .tag.refactor  { background: rgba(88,166,255,.15); color: var(--accent); border: 1px solid var(--accent); }
+    .tag.roadmap   { background: rgba(63,185,80,.15);  color: var(--success); border: 1px solid var(--success); }
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 11px;
+      padding: 24px;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🤖 Ultra Repo AI Agent</h1>
+  <span class="badge">AI</span>
+  <a class="nav-link" href="dashboard.html">← Security Dashboard</a>
+</header>
+
+<main>
+
+  <!-- Scores -->
+  <div class="section-title">📊 Scoring repozytorium</div>
+  <div class="score-grid" id="scoreGrid">
+    <div class="score-card">
+      <div class="score-label">Security</div>
+      <div class="score-value" id="scoreSecurity">–</div>
+      <div class="score-bar-bg"><div class="score-bar" id="barSecurity" style="width:0%"></div></div>
+    </div>
+    <div class="score-card">
+      <div class="score-label">Maintainability</div>
+      <div class="score-value" id="scoreMaintain">–</div>
+      <div class="score-bar-bg"><div class="score-bar" id="barMaintain" style="width:0%"></div></div>
+    </div>
+    <div class="score-card">
+      <div class="score-label">Performance</div>
+      <div class="score-value" id="scorePerf">–</div>
+      <div class="score-bar-bg"><div class="score-bar" id="barPerf" style="width:0%"></div></div>
+    </div>
+    <div class="score-card">
+      <div class="score-label">Prod Readiness</div>
+      <div class="score-value" id="scoreProd">–</div>
+      <div class="score-bar-bg"><div class="score-bar" id="barProd" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- Analysis -->
+  <div class="card">
+    <h2>📂 Analiza repozytorium</h2>
+    <pre class="output-box" id="analysisOutput">Kliknij "Rozpocznij analizę", aby wygenerować raport.</pre>
+    <button id="analyzeBtn" onclick="runAnalysis()">Rozpocznij analizę</button>
+  </div>
+
+  <!-- Tags -->
+  <div class="card" id="tagSection" style="display:none">
+    <h2>🏷️ Kategorie problemów</h2>
+    <div id="tagContainer"></div>
+  </div>
+
+  <!-- Decisions -->
+  <div class="card">
+    <h2>🤖 Decyzje i rekomendacje agenta</h2>
+    <div class="decision-box" id="decisionOutput">Tutaj pojawią się decyzje agenta po przeprowadzeniu analizy.</div>
+  </div>
+
+  <!-- Roadmap -->
+  <div class="card" id="roadmapSection" style="display:none">
+    <h2>🗺️ Roadmapa działań</h2>
+    <pre class="output-box" id="roadmapOutput"></pre>
+  </div>
+
+</main>
+
+<footer>Ultra Repo AI Agent &mdash; Ultra Security Monitor &copy; 2024</footer>
+
+<script>
+  const repoFiles = [
+    'UltraSecurityMonitor.ps1',
+    'Audit-Project.ps1',
+    'dashboard.html',
+    'repo-agent.html',
+    'README.md',
+    'SECURITY.md',
+    'web/joke-generator/index.html'
+  ];
+
+  const securityIssues = [
+    'Brak walidacji inputu użytkownika w skryptach PowerShell',
+    'Nieaktualne lub niezweryfikowane zależności npm w web/'
+  ];
+
+  const refactorSuggestions = [
+    'Podziel UltraSecurityMonitor.ps1 na mniejsze moduły',
+    'Wyodrębnij logikę alertów do osobnego skryptu',
+    'Uprość i zmodularyzuj dashboard.html'
+  ];
+
+  const roadmap = [
+    'Naprawić zidentyfikowane security issues',
+    'Refaktoryzacja i modularyzacja skryptów PowerShell',
+    'Dodać pipeline CI/CD (GitHub Actions)',
+    'Wygenerować testy jednostkowe (Pester)',
+    'Rozszerzyć dokumentację API i konfiguracji'
+  ];
+
+  const choices = [
+    'Zacznij od naprawy security issues – to priorytet bezpieczeństwa',
+    'Najpierw refaktoryzacja modułów, aby ułatwić dalszy rozwój',
+    'Dodaj CI/CD i testy automatyczne – zwiększ stabilność',
+    'Skup się na dokumentacji i onboardingu nowych kontrybutorów'
+  ];
+
+  // Probability that the agent recommends the top-priority action (security fix)
+  const FIRST_CHOICE_PROBABILITY = 0.7;
+
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function setScore(id, barId, value) {
+    document.getElementById(id).textContent = value + '/10';
+    document.getElementById(barId).style.width = (value * 10) + '%';
+  }
+
+  function runAnalysis() {
+    const btn = document.getElementById('analyzeBtn');
+    const analysisOutput = document.getElementById('analysisOutput');
+
+    btn.disabled = true;
+    analysisOutput.innerHTML = '<span class="spinner"></span>Analiza w toku…';
+
+    setTimeout(() => {
+      let output = '📂 Pliki repozytorium:\n';
+      repoFiles.forEach(f => { output += `  • ${f}\n`; });
+
+      output += '\n🔒 Problemy bezpieczeństwa:\n';
+      securityIssues.forEach(s => { output += `  ⚠ ${s}\n`; });
+
+      output += '\n🛠 Sugestie refaktoryzacji:\n';
+      refactorSuggestions.forEach(r => { output += `  → ${r}\n`; });
+
+      analysisOutput.textContent = output;
+
+      // Scores
+      const sec  = randInt(7, 9);
+      const main = randInt(6, 9);
+      const perf = randInt(5, 8);
+      const prod = randInt(5, 8);
+      setScore('scoreSecurity', 'barSecurity', sec);
+      setScore('scoreMaintain', 'barMaintain', main);
+      setScore('scorePerf',     'barPerf',     perf);
+      setScore('scoreProd',     'barProd',     prod);
+
+      // Tags
+      const tagContainer = document.getElementById('tagContainer');
+      tagContainer.innerHTML = '';
+      securityIssues.forEach(s => {
+        const t = document.createElement('span');
+        t.className = 'tag security';
+        t.textContent = '🔒 ' + s.split(' ').slice(0, 4).join(' ') + '…';
+        tagContainer.appendChild(t);
+      });
+      refactorSuggestions.forEach(r => {
+        const t = document.createElement('span');
+        t.className = 'tag refactor';
+        t.textContent = '🛠 ' + r.split(' ').slice(0, 4).join(' ') + '…';
+        tagContainer.appendChild(t);
+      });
+      document.getElementById('tagSection').style.display = '';
+
+      // Roadmap
+      let rmOut = '';
+      roadmap.forEach((r, i) => { rmOut += `${i + 1}. ${r}\n`; });
+      document.getElementById('roadmapOutput').textContent = rmOut;
+      document.getElementById('roadmapSection').style.display = '';
+
+      // Decision
+      const idx = Math.random() < FIRST_CHOICE_PROBABILITY ? 0 : randInt(0, choices.length - 1);
+      document.getElementById('decisionOutput').textContent =
+        '🤖 Rekomendacja agenta: ' + choices[idx];
+
+      btn.disabled = false;
+      btn.textContent = 'Uruchom ponownie';
+    }, 1200);
+  }
+</script>
+</body>
+</html>
