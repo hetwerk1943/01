@@ -1,0 +1,15 @@
+{
+  "name": "ultra-security-monitor",
+  "version": "1.0.0",
+  "description": "Ultra Security Monitor – dashboard and AI agent served locally",
+  "type": "module",
+  "scripts": {
+    "start": "http-server . -p 8080 --cors",
+    "lint-all": "eslint \"web/**/*.js\""
+  },
+  "devDependencies": {
+    "eslint": "^9.21.0",
+    "globals": "^17.3.0",
+    "http-server": "^14.1.1"
+  }
+}
