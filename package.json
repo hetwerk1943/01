@@ -1,0 +1,10 @@
+{
+  "name": "ultra-security-monitor",
+  "version": "1.0.0",
+  "description": "Ultra Security Monitor – Total Edition dashboard and utilities",
+  "scripts": {
+    "test": "node tests/monitor.test.js"
+  },
+  "keywords": ["security", "monitor", "dashboard"],
+  "license": "MIT"
+}
