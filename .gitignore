@@ -1,0 +1,17 @@
+### Node ###
+node_modules/
+package-lock.json
+
+### Logs & runtime data ###
+*.log
+security-report.txt
+SIEM/
+Backup/
+
+### Environment & secrets ###
+.env
+.env.*
+
+### IDE ###
+.vscode/
+.idea/
