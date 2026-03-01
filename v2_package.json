@@ -1,0 +1,12 @@
+{
+  "name": "lifehub",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Private AI-powered productivity browser extension.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "lint": "node scripts/lint.mjs",
+    "test": "node scripts/test.mjs"
+  }
+}

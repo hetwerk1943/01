@@ -1,0 +1,17 @@
+{
+  "name": "lifehub",
+  "version": "0.1.0",
+  "description": "LifeHub – Inteligentna, prywatna przeglądarka internetowa z AI, tablicami i grupami",
+  "main": "scripts/start.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/start.mjs",
+    "build": "node scripts/build.mjs",
+    "test": "node tests/bookmarks.test.js && node tests/notes.test.js && node tests/ai.test.js"
+  },
+  "author": "hetwerk1943",
+  "license": "MIT",
+  "dependencies": {
+    "electron": "^29.1.0" 
+  }
+}

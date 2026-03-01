@@ -1,0 +1,25 @@
+{
+  "points": 120,
+  "achievements": [
+    "first_card",
+    "ai_master"
+  ],
+  "userSettings": {
+    "theme": "dark",
+    "extraColumnsUnlocked": 1
+  },
+  "history": [
+    {
+      "action": "add_card",
+      "cardId": "abc123",
+      "points": 5,
+      "timestamp": 1679990000
+    },
+    {
+      "action": "ai_summary",
+      "cardId": "def456",
+      "points": 10,
+      "timestamp": 1679990500
+    }
+  ]
+}

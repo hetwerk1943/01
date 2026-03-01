@@ -1,0 +1,34 @@
+{
+  "lifehubPoints": {
+    "userId": "example-uuid-1234", // unikalny identyfikator użytkownika (opcjonalnie, można użyć np. Date.now()+Math.random() przy pierwszym uruchomieniu)
+    "totalPoints": 125,             // suma punktów użytkownika
+    "history": [                    // rozbudowana historia działań
+      {
+        "timestamp": 1719925359000,
+        "action": "add_card",         // typ akcji: add_card / gen_summary / edit_note / reward_redeem etc.
+        "points": 5,
+        "details": {
+          "title": "Tytuł karty 1"
+        }
+      },
+      {
+        "timestamp": 1719925402000,
+        "action": "gen_summary",
+        "points": 10,
+        "details": {
+          "cardId": "cfe321", 
+          "summaryLength": 256
+        }
+      }
+      // kolejne zdarzenia...
+    ],
+    "rewards": {                   // odblokowane nagrody
+      "premium_columns": true,
+      "theme_dark": true,
+      "theme_light": false,
+      "badges": ["first_card", "ai_pro"]
+    },
+    "level": 2,                    // przykład: Level 2 za 100+ punktów
+    "latestClaimed": "2026-03-01T10:35:19Z"
+  }
+}
