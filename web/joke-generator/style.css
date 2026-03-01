@@ -1,0 +1,49 @@
+/* Random Joke Generator – styles */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f0f4f8;
+  font-family: Arial, sans-serif;
+}
+
+.joke-container {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  padding: 2rem 2.5rem;
+  max-width: 520px;
+  width: 90%;
+  text-align: center;
+}
+
+h1 {
+  font-size: 1.6rem;
+  margin-bottom: 1.25rem;
+  color: #24292e;
+}
+
+button {
+  padding: 0.6rem 1.4rem;
+  background: #0366d6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+button:hover { background: #0256b4; }
+button:disabled { background: #6c757d; cursor: not-allowed; }
+
+#joke {
+  margin-top: 1.25rem;
+  font-size: 1rem;
+  color: #444;
+  min-height: 3rem;
+  line-height: 1.6;
+}
