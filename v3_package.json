@@ -1,0 +1,10 @@
+{
+  "name": "lifehub",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Private AI-powered productivity browser extension.",
+  "type": "module",
+  "scripts": {
+    "build": "node -e \"console.log('No build step (MVP). Load extension/ as unpacked.')\""
+  }
+}

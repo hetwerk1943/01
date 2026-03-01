@@ -1,0 +1,43 @@
+LifeHub/
+│
+├── README.md                 # Opis projektu, wizja, roadmapa MVP
+├── LICENSE                   # Licencja MIT lub MPL-2.0
+├── package.json              # Node (dev/test), zależności/demonstracja (nie wymagane dla samego rozszerzenia)
+├── .gitignore                # node_modules/, dist/, *.log, *.env, .DS_Store
+│
+├── extension/                # Główny folder rozszerzenia
+│   ├── manifest.json         # Manifest MV3 dla Chrome
+│   ├── background/
+│   │   └── service-worker.js
+│   ├── popup/
+│   │   ├── popup.html
+│   │   └── popup.js
+│   ├── dashboard/
+│   │   ├── dashboard.html
+│   │   ├── dashboard.js
+│   │   └── dashboard.css
+│   ├── content/
+│   │   └── content.js
+│   ├── modules/
+│   │   ├── notes.js
+│   │   └── ai.js
+│   ├── rules/
+│   │   └── tracking-basic.json
+│   └── assets/
+│       ├── icon16.png
+│       ├── icon48.png
+│       └── icon128.png
+│
+├── docs/
+│   ├── ROADMAP.md
+│   ├── PRIVACY.md
+│   └── AI.md
+│
+├── scripts/
+│   ├── build.mjs
+│   └── start.mjs
+│
+└── tests/
+    ├── bookmarks.test.js
+    ├── notes.test.js
+    └── ai.test.js

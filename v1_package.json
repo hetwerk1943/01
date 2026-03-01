@@ -1,0 +1,11 @@
+{
+  "name": "lifehub",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "lint": "node scripts/lint.mjs",
+    "test": "node scripts/test.mjs"
+  }
+}

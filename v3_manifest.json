@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "LifeHub Kanban + AI-summary + Points",
+  "version": "1.0.0",
+  "description": "Kanban, AI podsumowania, gamifikacja. Productivity dashboard z nagrodami.",
+  "background": { "service_worker": "src/background/service-worker.js" },
+  "permissions": ["tabs", "storage", "scripting", "notifications"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": "icon-32.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/ai-extract.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    { "resources": ["dashboard.html", "icon-*.png"], "matches": ["<all_urls>"] }
+  ]
+}
