@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CVD FAQ</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    margin:40px;
+    background:#f4f6f8;
+}
+
+h1{
+    text-align:center;
+}
+
+.faq-container{
+    max-width:800px;
+    margin:auto;
+}
+
+.faq-item{
+    background:white;
+    border-radius:8px;
+    margin-bottom:10px;
+    padding:15px;
+    cursor:pointer;
+    box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+.faq-question{
+    font-weight:bold;
+}
+
+.faq-answer{
+    display:none;
+    margin-top:10px;
+    color:#444;
+}
+</style>
+</head>
+
+<body>
+
+<h1>FAQ – Coordinated Vulnerability Disclosure</h1>
+
+<div class="faq-container">
+
+<div class="faq-item" onclick="toggleFAQ(this)">
+<div class="faq-question">Wat is een CVD-melding?</div>
+<div class="faq-answer">
+CVD staat voor Coordinated Vulnerability Disclosure. Het betekent dat je een beveiligingslek
+verantwoord meldt zodat het opgelost kan worden voordat kwaadwillenden het misbruiken.
+</div>
+</div>
+
+<div class="faq-item" onclick="toggleFAQ(this)">
+<div class="faq-question">Wanneer kan ik een kwetsbaarheid melden?</div>
+<div class="faq-answer">
+Wanneer je een beveiligingslek vindt in systemen van de Rijksoverheid of een kwetsbaarheid
+die meerdere organisaties of leveranciers treft.
+</div>
+</div>
+
+<div class="faq-item" onclick="toggleFAQ(this)">
+<div class="faq-question">Wat gebeurt er nadat ik een melding doe?</div>
+<div class="faq-answer">
+Je ontvangt meestal binnen één werkdag een ontvangstbevestiging en binnen drie werkdagen
+een eerste beoordeling van het NCSC.
+</div>
+</div>
+
+<div class="faq-item" onclick="toggleFAQ(this)">
+<div class="faq-question">Mag ik de kwetsbaarheid openbaar maken?</div>
+<div class="faq-answer">
+Nee. Deel de informatie niet met anderen totdat het probleem is opgelost en er afspraken
+zijn gemaakt over publicatie.
+</div>
+</div>
+
+</div>
+
+<script>
+function toggleFAQ(element){
+    const answer = element.querySelector(".faq-answer");
+    answer.style.display = answer.style.display === "block" ? "none" : "block";
+}
+</script>
+
+</body>
+</html>
