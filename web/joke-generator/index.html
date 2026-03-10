@@ -1,43 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Random Joke Generator</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Joke Generator</title>
 </head>
 <body>
-  <div class="joke-container">
-    <h1>Random Joke Generator</h1>
-
-    <div class="controls">
-      <label class="control">
-        Category
-        <select id="category">
-          <option value="Any" selected>Any</option>
-          <option value="Programming">Programming</option>
-          <option value="Misc">Misc</option>
-          <option value="Pun">Pun</option>
-          <option value="Spooky">Spooky</option>
-          <option value="Christmas">Christmas</option>
-        </select>
-      </label>
-
-      <label class="control checkbox">
-        <input type="checkbox" id="safeMode" checked />
-        Safe mode
-      </label>
+    <div class="card">
+        <h1 class="section-title">Joke Generator</h1>
+        <!-- Existing controls and buttons go here -->
+        <button id="generate-joke">Generate Joke</button>
+        <button id="save-joke">Save Joke</button>
+        <div id="joke-output"></div>
+        <ul class="features">
+            <li><i class="icon-feature">🎉</i> Fun jokes for everyone</li>
+            <li><i class="icon-feature">✨</i> Easy to use interface</li>
+            <li><i class="icon-feature">🔄</i> Unlimited jokes!</li>
+        </ul>
     </div>
-
-    <div class="actions">
-      <button id="jokeBtn">Get a Joke</button>
-      <button id="copyBtn" type="button" disabled>Copy</button>
-    </div>
-
-    <p id="joke" aria-live="polite"></p>
-    <p id="status" class="status" aria-live="polite"></p>
-  </div>
-
-  <script src="app.js"></script>
+    <footer>
+        <p>&copy; 2026 Joke Generator</p>
+    </footer>
+    <script src="script.js"></script>
 </body>
 </html>
