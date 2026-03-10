@@ -8,6 +8,8 @@ function Start-UltraSecurityMonitor {
         [string]$BaseFolder
     )
 
+    #Requires -Version 5.1
+
     # ---- Load configuration ----
     $cfg = Get-UsmConfig -ConfigPath $ConfigPath -BaseFolder $BaseFolder
 
