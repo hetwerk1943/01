@@ -37,7 +37,7 @@ export async function register(
     throw new AppError('Email already in use', 409);
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await bcrypt.hash(password, config.bcryptSaltRounds);
   const user = await prisma.user.create({
     data: { email, passwordHash, name },
   });
@@ -69,7 +69,7 @@ export async function requestPasswordReset(
 
   const rawToken = crypto.randomBytes(32).toString('hex');
   const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-  const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + config.passwordResetExpiryMs);
 
   await prisma.passwordResetToken.create({
     data: { tokenHash, expiresAt, userId: user.id },
@@ -97,7 +97,7 @@ export async function confirmPasswordReset(
     throw new AppError('Invalid or expired reset token', 400);
   }
 
-  const passwordHash = await bcrypt.hash(newPassword, 10);
+  const passwordHash = await bcrypt.hash(newPassword, config.bcryptSaltRounds);
 
   await prisma.$transaction([
     prisma.user.update({

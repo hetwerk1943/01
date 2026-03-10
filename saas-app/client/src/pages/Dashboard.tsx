@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../api/client';
+import { api, ApiError } from '../api/client';
 
 interface User {
   id: string;
@@ -20,7 +20,7 @@ export default function Dashboard() {
       .then((data) => setUser(data.user))
       .catch((err) => {
         setError(err instanceof Error ? err.message : 'Failed to load user');
-        if (err instanceof Error && err.message.includes('401')) {
+        if (err instanceof ApiError && err.status === 401) {
           localStorage.removeItem('token');
           navigate('/login');
         }

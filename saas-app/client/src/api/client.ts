@@ -1,5 +1,15 @@
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
 
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 function getToken(): string | null {
   return localStorage.getItem('token');
 }
@@ -26,7 +36,7 @@ async function request<T>(
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(errorData.error ?? 'Request failed');
+    throw new ApiError(errorData.error ?? 'Request failed', res.status);
   }
 
   if (res.status === 204) {
