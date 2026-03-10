@@ -23,6 +23,21 @@ services:
       retries: 5
 
   # Express API server
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: saasapp
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
   server:
     build:
       context: .
@@ -53,6 +68,15 @@ services:
       sh -c "npx prisma migrate deploy && node dist/index.js"
 
   # React client (nginx)
+    ports:
+      - '4000:4000'
+    depends_on:
+      - db
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/saasapp
+
   client:
     build:
       context: .
@@ -61,8 +85,11 @@ services:
     restart: unless-stopped
     ports:
       - '80:80'
+    ports:
+      - '3000:80'
     depends_on:
       - server
 
 volumes:
   postgres_data:
+  pgdata:

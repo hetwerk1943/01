@@ -19,5 +19,10 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 3000,
   },
 });

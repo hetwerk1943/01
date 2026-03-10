@@ -28,4 +28,9 @@ export const logger = winston.createLogger({
   level: config.env === 'production' ? 'info' : 'debug',
   format: config.env === 'production' ? prodFormat : devFormat,
   transports: [new winston.transports.Console()],
+import pino from 'pino';
+import { config } from '../config';
+
+export const logger = pino({
+  level: config.nodeEnv === 'test' ? 'silent' : config.nodeEnv === 'production' ? 'info' : 'debug',
 });

@@ -18,6 +18,14 @@ export function signToken(payload: JwtPayload): string {
 }
 
 /** Verifies and decodes a JWT; throws if invalid or expired */
+}
+
+export function signToken(payload: JwtPayload): string {
+  return jwt.sign(payload, config.jwtSecret, {
+    expiresIn: config.jwtExpiresIn as jwt.SignOptions['expiresIn'],
+  });
+}
+
 export function verifyToken(token: string): JwtPayload {
   return jwt.verify(token, config.jwtSecret) as JwtPayload;
 }

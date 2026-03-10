@@ -20,6 +20,27 @@ export function errorHandler(
         field: e.path.join('.'),
         message: e.message,
       })),
+export class AppError extends Error {
+  constructor(
+    public message: string,
+    public statusCode: number = 500,
+  ) {
+    super(message);
+    this.name = 'AppError';
+  }
+}
+
+export function errorHandler(
+  err: Error,
+  req: Request,
+  res: Response,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _next: NextFunction,
+): void {
+  if (err instanceof ZodError) {
+    res.status(400).json({
+      error: 'Validation error',
+      details: err.errors,
     });
     return;
   }
@@ -47,4 +68,11 @@ export function createHttpError(status: number, message: string): Error & { stat
   const err = new Error(message) as Error & { status: number };
   err.status = status;
   return err;
+  if (err instanceof AppError) {
+    res.status(err.statusCode).json({ error: err.message });
+    return;
+  }
+
+  logger.error({ err }, 'Unhandled error');
+  res.status(500).json({ error: 'Internal server error' });
 }

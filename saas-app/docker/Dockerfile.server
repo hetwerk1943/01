@@ -1,4 +1,5 @@
 # ---- Build stage ----
+# Build stage
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -29,6 +30,38 @@ RUN npm ci --omit=dev
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/dist ./dist
 COPY server/prisma ./prisma
+# Copy database package files and install
+COPY database/package.json database/package-lock.json* ./database/
+RUN cd database && npm install
+
+# Copy database prisma schema
+COPY database/prisma ./database/prisma
+
+# Generate prisma client
+RUN cd database && npx prisma generate
+
+# Copy server package files and install
+COPY server/package.json server/package-lock.json* ./server/
+RUN cd server && npm install
+
+# Generate prisma client for server
+RUN cd server && npx prisma generate
+
+# Copy server source
+COPY server/src ./server/src
+COPY server/tsconfig.json ./server/
+
+# Build server
+RUN cd server && npm run build
+
+# Production stage
+FROM node:20-alpine AS production
+
+WORKDIR /app
+
+COPY --from=builder /app/server/package.json ./
+COPY --from=builder /app/server/dist ./dist
+COPY --from=builder /app/server/node_modules ./node_modules
 
 EXPOSE 4000
 
