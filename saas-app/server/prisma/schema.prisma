@@ -1,0 +1,48 @@
+// Prisma schema – defines database models for the SaaS application
+// Run: npx prisma migrate dev --name init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model – core entity for authentication and profile data
+model User {
+  id                String   @id @default(uuid())
+  email             String   @unique
+  password          String   // bcrypt hash
+  name              String
+  bio               String?
+  avatarUrl         String?
+  role              Role     @default(USER)
+  isVerified        Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  passwordResetTokens PasswordResetToken[]
+
+  @@map("users")
+}
+
+// PasswordResetToken – stores one-time tokens for password reset flow
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+enum Role {
+  USER
+  ADMIN
+}

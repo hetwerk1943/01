@@ -1,0 +1,68 @@
+# docker-compose.yml – runs client, server and PostgreSQL
+# Usage: docker compose up --build
+version: '3.9'
+
+services:
+  # PostgreSQL database
+  postgres:
+    image: postgres:16-alpine
+    container_name: saas-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-saas_db}
+      POSTGRES_USER: ${POSTGRES_USER:-saas_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-saas_pass}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-saas_user} -d ${POSTGRES_DB:-saas_db}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Express API server
+  server:
+    build:
+      context: ./server
+      dockerfile: ../docker/Dockerfile.server
+    container_name: saas-server
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-saas_user}:${POSTGRES_PASSWORD:-saas_pass}@postgres:5432/${POSTGRES_DB:-saas_db}
+      JWT_SECRET: ${JWT_SECRET:-changeme_in_production_secret}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      RESET_TOKEN_TTL_MINUTES: ${RESET_TOKEN_TTL_MINUTES:-60}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost}
+      SMTP_HOST: ${SMTP_HOST:-smtp.ethereal.email}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-noreply@example.com}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-900000}
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-100}
+    ports:
+      - '4000:4000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "npx prisma migrate deploy && node dist/index.js"
+
+  # React client (nginx)
+  client:
+    build:
+      context: ./client
+      dockerfile: ../docker/Dockerfile.client
+    container_name: saas-client
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    depends_on:
+      - server
+
+volumes:
+  postgres_data:

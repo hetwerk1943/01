@@ -1,0 +1,27 @@
+-- Initial database setup (handled by Prisma migrations)
+-- This file documents the expected schema for reference.
+-- Run: npx prisma migrate dev --name init  (from saas-app/server/)
+
+-- Users table
+-- CREATE TABLE users (
+--   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   email      TEXT UNIQUE NOT NULL,
+--   password   TEXT NOT NULL,
+--   name       TEXT NOT NULL,
+--   bio        TEXT,
+--   avatar_url TEXT,
+--   role       TEXT NOT NULL DEFAULT 'USER',
+--   is_verified BOOLEAN NOT NULL DEFAULT false,
+--   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+--   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- );
+
+-- Password reset tokens table
+-- CREATE TABLE password_reset_tokens (
+--   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   token      TEXT UNIQUE NOT NULL,
+--   user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+--   expires_at TIMESTAMPTZ NOT NULL,
+--   used_at    TIMESTAMPTZ,
+--   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- );
