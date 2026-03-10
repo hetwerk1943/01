@@ -1,221 +1,88 @@
-# 🛡️ Ultra Security Monitor – Edycja Całkowita (Total Edition)
+# 🛡️ Ultra Security Monitor – Monorepo
 
-Ultra Security Monitor to zaawansowany system monitorowania i ochrony systemu Windows w czasie rzeczywistym, zaprojektowany tak, aby działał jak profesjonalny **Endpoint Detection & Response (EDR)**, bez ingerencji w działanie użytkownika (chyba że włączysz opcjonalną reakcję).
+[![CI](https://github.com/hetwerk1943/01/actions/workflows/ci.yml/badge.svg)](https://github.com/hetwerk1943/01/actions/workflows/ci.yml)
 
-Skrypt łączy w sobie funkcje monitoringu procesów, sieci, plików, rejestru, kont użytkowników oraz automatycznej analizy i alertów. Jest kompletnym narzędziem do ochrony przed złośliwym oprogramowaniem, ransomware, keyloggerami, rootkitami oraz podejrzanymi połączeniami sieciowymi.
-
----
-
-## 🔹 Pliki w repozytorium
-
-| Plik | Opis |
-|------|------|
-| `UltraSecurityMonitor.ps1` | Główny skrypt PowerShell – silnik monitoringu |
-| `masterAgent.ps1` | Skrypt Master Agent – automatyczne zadania nocne (backup, audyt, analiza) |
-| `Audit-Project.ps1` | Skrypt audytu projektu – weryfikacja plików i składni |
-| `dashboard.html` | Dashboard HTML/JS do wizualizacji logów i alertów |
-| `agent.html` | Panel AI Agent do analizy repozytorium GitHub |
-| `web/repo-agent/` | Wersja modułowa panelu AI Agent (HTML + JS + CSS) |
-| `web/joke-generator/` | Mini-aplikacja generatora losowych żartów |
-| `README.md` | Dokumentacja projektu |
+A production-grade Windows endpoint security monitor and web dashboard, organized as a maintainable monorepo.
 
 ---
 
-## 🔹 Wymagania
+## 📁 Repository map
 
-- **System operacyjny:** Windows 10 / Windows 11 (64-bit)
-- **PowerShell:** wersja 5.1 lub nowsza (wbudowany w Windows)
-- **Uprawnienia:** konto Administrator (wymagane do monitorowania procesów przez WMI)
-- **Połączenie z internetem:** opcjonalnie (do alertów Discord, VirusTotal API)
-- **Przeglądarka:** dowolna nowoczesna (do otwarcia `dashboard.html`)
+| Path | Description |
+|------|-------------|
+| [`src/ultra-security-monitor/`](src/ultra-security-monitor/) | PowerShell module (core engine) |
+| [`scripts/`](scripts/) | Automation scripts (setup, run, audit) |
+| [`tests/powershell/`](tests/powershell/) | Pester 5 test suite |
+| [`configs/`](configs/) | Example configuration files |
+| [`docs/`](docs/) | Project documentation |
+| [`tools/ci/`](tools/ci/) | CI helper scripts |
+| [`web/`](web/) | Static HTML/JS mini-apps (served by `npm start`) |
+| [`saas-app/`](saas-app/) | Independent SaaS scaffold (React + Node + Prisma) |
+| `UltraSecurityMonitor.ps1` | Compatibility shim → module |
+| `masterAgent.ps1` | Compatibility shim → `scripts/run-monitor.ps1` |
+| `Audit-Project.ps1` | Compatibility shim → `scripts/audit.ps1` |
 
 ---
 
-## 🔹 Konfiguracja
-
-Otwórz `UltraSecurityMonitor.ps1` w edytorze i dostosuj sekcję `KONFIGURACJA` na początku pliku:
+## 🚀 Quick start
 
 ```powershell
-# Discord webhook (opcjonalnie)
-$DiscordWebhookUrl = "https://discord.com/api/webhooks/..."
+# 1. Clone and set up
+git clone https://github.com/hetwerk1943/01.git
+cd 01
+pwsh -File scripts\setup.ps1
 
-# VirusTotal API (opcjonalnie)
-$VirusTotalApiKey = "twój-klucz-api"
+# 2. Set secrets via environment variables (never commit secrets!)
+$env:USM_DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/...'
+$env:USM_VT_API_KEY          = 'your-virustotal-api-key'
 
-# E-mail alerty
-$EmailAlerts  = $true
-$SmtpServer   = "smtp.twojadomena.pl"
-$SmtpFrom     = "monitor@twojadomena.pl"
-$SmtpTo       = "ty@twojadomena.pl"
-$SmtpUseSsl   = $true
-$SmtpPort     = 587
+# 3. Start the monitor (requires Administrator)
+pwsh -File scripts\run-monitor.ps1
 
-# Foldery do monitorowania (możesz rozszerzyć)
-$MonitoredFolders = @(
-    "$env:windir\System32",
-    "$env:USERPROFILE\Documents",
-    "$env:USERPROFILE\Desktop"
-)
+# 4. Serve the dashboard
+npm install && npm start   # http://localhost:8080
 ```
 
-Opcjonalnie utwórz plik `Documents\SecurityMonitor\whitelist.json` z listą zaufanych ścieżek:
-
-```json
-[
-  "C:\\Windows\\*",
-  "C:\\Program Files\\*",
-  "C:\\Program Files (x86)\\*"
-]
-```
+See [docs/QUICK_START.md](docs/QUICK_START.md) for the full guide.
 
 ---
 
-## 🔹 Uruchomienie
+## 🔑 Supported environment variables
 
-### Ręczne uruchomienie (jednorazowe)
-
-1. Otwórz **PowerShell jako Administrator**
-2. Zmień politykę wykonywania (jednorazowo):
-   ```powershell
-   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-   ```
-3. Uruchom skrypt:
-   ```powershell
-   cd "C:\Users\<TwojaNazwa>\Documents\SecurityMonitor"
-   .\UltraSecurityMonitor.ps1
-   ```
-
-### Automatyczny start przy logowaniu (Scheduled Task)
-
-Uruchom poniższe polecenia jako Administrator:
-
-```powershell
-$ScriptPath = "$env:USERPROFILE\Documents\SecurityMonitor\UltraSecurityMonitor.ps1"
-$action     = New-ScheduledTaskAction -Execute "powershell.exe" `
-                  -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$ScriptPath`""
-$trigger    = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
-Register-ScheduledTask -Action $action -Trigger $trigger `
-    -TaskName "UltraSecurityMonitor" -RunLevel Highest -Force
-```
+| Variable | Purpose |
+|----------|---------|
+| `USM_DISCORD_WEBHOOK_URL` | Discord webhook for alerts |
+| `USM_VT_API_KEY` | VirusTotal API key |
+| `USM_SMTP_SERVER` | SMTP server hostname |
+| `USM_SMTP_FROM` | Sender e-mail |
+| `USM_SMTP_TO` | Recipient e-mail |
+| `USM_EMAIL_ALERTS` | `true` to enable e-mail alerts |
+| `USM_BASE_FOLDER` | Override runtime data directory |
 
 ---
 
-## 🔹 Kluczowe funkcje
+## 📚 Documentation
 
-### 1️⃣ Monitorowanie procesów (EDR)
-
-- Śledzenie każdego uruchomionego procesu w systemie w czasie rzeczywistym (WMI `Win32_ProcessStartTrace`).
-- Porównanie procesów z białą listą i wzorcami podejrzanych nazw/ścieżek.
-- Weryfikacja podpisu cyfrowego pliku wykonywalnego (`Get-AuthenticodeSignature`).
-- Obliczanie skrótu SHA-256 i wysyłanie do VirusTotal (jeśli skonfigurowany klucz API).
-- Raportowanie podejrzanych procesów do logów, raportu tekstowego, SIEM JSON oraz alertów Discord/e-mail.
-
-### 2️⃣ Monitoring sieci
-
-- Analiza połączeń TCP/UDP inicjowanych przez podejrzane procesy (`Get-NetTCPConnection`, `Get-NetUDPEndpoint`).
-- Raportowanie adresów zdalnych i portów.
-
-### 3️⃣ Monitoring plików i folderów
-
-- Śledzenie folderów: `System32`, `Program Files`, `Program Files (x86)`, `Dokumenty`, `Pulpit`.
-- Rejestrowanie zdarzeń: Created, Changed, **Renamed** (poprawka – poprzednio brak zdarzenia Renamed).
-- Tworzenie automatycznych kopii zapasowych każdej zmienionej/utworzonej pliku do folderu `Backup`.
-- Alert przy zmianach w kluczowych plikach systemowych lub konfiguracyjnych.
-- Analiza podpisów cyfrowych i hashów plików w celu wykrycia malware.
-
-### 4️⃣ Monitoring rejestru systemowego
-
-- Śledzenie kluczy autostartu i usług w celu wykrycia złośliwego oprogramowania.
-
-### 5️⃣ Monitoring kont użytkowników
-
-- Śledzenie logowań lokalnych i domenowych, tworzenia i modyfikacji kont.
-- Wykrywanie nietypowej aktywności administratora lub nowo utworzonych kont.
-
-### 6️⃣ Automatyczna reakcja i sandboxing
-
-- Opcjonalne blokowanie podejrzanych procesów lub połączeń.
-- Przenoszenie plików do kwarantanny (folder `Backup`).
-- Możliwość uruchamiania podejrzanych plików w izolowanym środowisku (sandbox).
-- Wykrywanie ransomware i masowych zmian plików z automatycznym backupem.
-
-### 7️⃣ Alerty i powiadomienia
-
-- **Discord webhook** – natychmiastowe powiadomienia na kanał Discord (z limitem 2000 znaków).
-- **E-mail (SMTP)** – alerty wysyłane przez dowolny serwer SMTP z SSL.
-- Dźwiękowe alerty przy krytycznych zdarzeniach.
-
-### 8️⃣ Raporty i dashboard
-
-- Logi zdarzeń w formacie TSV (`security.log`) z automatyczną rotacją po przekroczeniu limitu 50 MB.
-- Raport podejrzanych procesów (`security-report.txt`).
-- **Dashboard HTML** (`dashboard.html`) z wizualizacją trendów alertów i zdarzeń SIEM – otwórz w przeglądarce i załaduj lokalny plik `siem.json` lub `security.log`.
-- Historia zdarzeń z możliwością przewijania i filtrowania według ważności.
-
-### 9️⃣ Integracja SIEM
-
-- Każde zdarzenie (podejrzany proces, zmiana pliku) jest zapisywane do pliku `SIEM\siem.json` w formacie **NDJSON** (jeden obiekt JSON na linię).
-- Format kompatybilny z Splunk, Elastic Stack (ELK), Graylog oraz innymi SIEM-ami obsługującymi JSON.
-- Struktura rekordu:
-  ```json
-  {
-    "timestamp": "2024-01-15T10:30:00.000+01:00",
-    "host": "DESKTOP-ABC123",
-    "user": "JanKowalski",
-    "event_type": "SuspiciousProcess",
-    "severity": "High",
-    "data": { "name": "mshta.exe", "pid": 1234, "path": "...", "hash": "...", "sig": "..." }
-  }
-  ```
-
-### 🔟 Integracja VirusTotal
-
-- Automatyczne sprawdzanie skrótu SHA-256 podejrzanego pliku w bazie VirusTotal API v3.
-- Wyniki (liczba detekcji `malicious`, `suspicious`) dodawane do alertu Discord/log/SIEM.
-- Wymaga klucza API (bezpłatny plan: 4 zapytania/minutę).
-  Utwórz konto na [virustotal.com](https://www.virustotal.com) i skopiuj klucz API do `$VirusTotalApiKey`.
+| Document | Description |
+|----------|-------------|
+| [docs/QUICK_START.md](docs/QUICK_START.md) | Installation and first run |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Component overview and data flow |
+| [docs/DEVELOPMENT_GUIDE.md](docs/DEVELOPMENT_GUIDE.md) | Contributing and coding conventions |
+| [docs/OPERATIONS.md](docs/OPERATIONS.md) | Running in production, log rotation, troubleshooting |
 
 ---
 
-## 🔹 Dane wyjściowe
+## ✅ Requirements
 
-Po uruchomieniu skrypt tworzy następujące pliki w `Documents\SecurityMonitor\`:
-
-| Plik/Folder | Zawartość |
-|-------------|-----------|
-| `security.log` | Wszystkie zdarzenia w formacie `ISO8601\tTreść` |
-| `security-report.txt` | Szczegółowe raporty podejrzanych procesów |
-| `SIEM\siem.json` | Zdarzenia w formacie NDJSON (Splunk/ELK) |
-| `Backup\` | Kopie zapasowe zmienionych plików |
-| `whitelist.json` | Opcjonalna biała lista zaufanych ścieżek |
+- Windows 10/11 or Windows Server 2019+
+- PowerShell 5.1+
+- Administrator privileges (for WMI process monitoring)
+- Node.js 18+ (optional, for dashboard and CI smoke tests)
 
 ---
 
-## 🔹 Podsumowanie
+## 🔒 Security
 
-Ultra Security Monitor – Total Edition to pełny system ochrony i monitoringu, który łączy funkcjonalność:
-
-- **EDR** (Detekcja i Reagowanie Punktów Końcowych)
-- **IDS** (System Wykrywania Włamań)
-- **Backup i Ransomware Protection**
-- **Analiza heurystyczna** podpisów cyfrowych i skrótów plików
-- **Integracja VirusTotal** – weryfikacja hashów w chmurze
-- **Eksport SIEM** – NDJSON kompatybilny z Splunk / ELK / Graylog
-- **Alerty w czasie rzeczywistym** (Discord, e-mail)
-- **Dashboard HTML/JS** z wizualizacją trendów i historią alertów
-
-MIT License
-
-Copyright (c) 2026 LifeHub Team
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+- **Never commit secrets.** Use `USM_*` environment variables.
+- See [SECURITY.md](SECURITY.md) for vulnerability reporting.
+- See [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) for contribution guidelines.
