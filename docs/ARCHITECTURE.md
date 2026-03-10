@@ -3,123 +3,113 @@
 ## Repository layout
 
 ```
-01/
+.
 ├─ src/
-│  └─ UltraSecurityMonitor/        # PowerShell module (primary product)
-│     ├─ UltraSecurityMonitor.psd1 # Module manifest
-│     ├─ UltraSecurityMonitor.psm1 # Module root (dot-sources Public/Private)
+│  └─ ultra-security-monitor/      PowerShell module
+│     ├─ UltraSecurityMonitor.psd1  Module manifest
+│     ├─ UltraSecurityMonitor.psm1  Module root (dot-sources Public + Private)
 │     ├─ Public/
 │     │  └─ Start-UltraSecurityMonitor.ps1
 │     └─ Private/
-│        ├─ Assert-UsmSafePath.ps1
-│        ├─ Get-UsmConfig.ps1
-│        ├─ Get-UsmSystemInfo.ps1
-│        ├─ Get-UsmVirusTotalReport.ps1
-│        ├─ Send-UsmAlert.ps1
-│        ├─ Test-UsmProcess.ps1
-│        ├─ Write-UsmLog.ps1
-│        └─ Write-UsmSiemEvent.ps1
+│        ├─ Get-UsmConfig.ps1       Config loader (JSON + env overrides)
+│        ├─ Get-UsmWhitelist.ps1    Whitelist cache
+│        ├─ Test-UsmSafePath.ps1    Path-traversal guardrails
+│        └─ Write-UsmLog.ps1        Structured logging + rotation
+│
 ├─ scripts/
-│  ├─ setup.ps1          # One-time environment setup
-│  ├─ run-monitor.ps1    # Convenience launcher
-│  └─ audit.ps1          # Project health check
-├─ configs/
-│  ├─ monitor.config.example.json
-│  └─ whitelist.example.json
+│  ├─ setup.ps1         First-time setup
+│  ├─ run-monitor.ps1   Start monitor / master-agent tasks
+│  └─ audit.ps1         Project audit (syntax, files, git)
+│
 ├─ tests/
 │  └─ powershell/
-│     └─ UltraSecurityMonitor.Tests.ps1  # Pester v5 tests
+│     └─ UltraSecurityMonitor.Tests.ps1   Pester 5 test suite
+│
 ├─ tools/
 │  └─ ci/
-│     └─ web-smoke.sh    # Web asset validation
+│     └─ web-smoke.js   Node.js web asset smoke checks
+│
+├─ configs/
+│  ├─ monitor.config.example.json   Example runtime config (safe to commit)
+│  └─ whitelist.example.json        Example process whitelist
+│
 ├─ web/
-│  ├─ repo-agent/        # Static web mini-app
-│  └─ joke-generator/    # Static web mini-app
-├─ saas-app/             # Independent SaaS scaffold (React + Node + Prisma)
-├─ docs/
-│  ├─ QUICK_START.md
-│  ├─ ARCHITECTURE.md    # ← you are here
-│  ├─ DEVELOPMENT_GUIDE.md
-│  └─ OPERATIONS.md
-└─ .github/
-   ├─ workflows/
-   │  ├─ ci.yml           # Lint + Pester + web smoke
-   │  ├─ codeql.yml       # GitHub CodeQL SAST
-   │  └─ fortify.yml      # Fortify on Demand (optional)
-   ├─ ISSUE_TEMPLATE/
-   ├─ PULL_REQUEST_TEMPLATE.md
-   └─ CONTRIBUTING.md
+│  ├─ repo-agent/       HTML/JS/CSS mini-app
+│  └─ joke-generator/   HTML/JS/CSS mini-app
+│
+├─ saas-app/            Independent SaaS scaffold (React + Node + Prisma)
+│
+├─ .github/
+│  ├─ workflows/
+│  │  ├─ ci.yml         Unified CI (PSScriptAnalyzer + Pester + web smoke)
+│  │  └─ fortify.yml    Fortify AST scan (optional, requires secrets)
+│  ├─ ISSUE_TEMPLATE/
+│  ├─ PULL_REQUEST_TEMPLATE.md
+│  └─ CONTRIBUTING.md
+│
+├─ docs/                Documentation
+├─ UltraSecurityMonitor.ps1   Compatibility shim → module
+├─ masterAgent.ps1            Compatibility shim → scripts/run-monitor.ps1
+└─ Audit-Project.ps1          Compatibility shim → scripts/audit.ps1
 ```
 
-Backward-compatible root-level shim scripts (`UltraSecurityMonitor.ps1`,
-`masterAgent.ps1`, `Audit-Project.ps1`) delegate to the module and scripts
-above.
+## Component: Ultra Security Monitor
 
----
-
-## Ultra Security Monitor – component overview
+### Event flow
 
 ```
- ┌─────────────────────────────────────────────────────┐
- │          Start-UltraSecurityMonitor (Public)         │
- │                                                      │
- │  ┌──────────────┐    ┌──────────────┐               │
- │  │ Config layer │    │  Dir init    │               │
- │  │ Get-UsmConfig│    │  (BaseFolder)│               │
- │  └──────────────┘    └──────────────┘               │
- │                                                      │
- │  ┌─────────────────────┐  ┌───────────────────────┐ │
- │  │ FileSystemWatcher   │  │ WMI ProcessStartTrace │ │
- │  │ Register-UsmFolder  │  │ (process monitoring)  │ │
- │  │ Monitor             │  │                       │ │
- │  └──────────┬──────────┘  └───────────┬───────────┘ │
- └─────────────┼──────────────────────────┼─────────────┘
-               │ events                   │ events
-               ▼                          ▼
- ┌─────────────────────────────────────────────────────┐
- │                  Private helpers                     │
- │                                                      │
- │  Write-UsmLog        → NDJSON to security.log        │
- │  Write-UsmSiemEvent  → NDJSON to SIEM/siem.json      │
- │  Backup-UsmFile      → BaseFolder/Backup/ (safe)     │
- │  Send-UsmDiscordAlert→ Discord webhook               │
- │  Send-UsmEmailAlert  → SMTP                          │
- │  Get-UsmVirusTotalReport → VT API v3                 │
- │  Test-UsmProcessSuspicious → heuristics + whitelist  │
- │  Assert-UsmSafePath  → path-traversal guard          │
- └─────────────────────────────────────────────────────┘
+Windows Events (WMI Win32_ProcessStartTrace)
+        │
+        ▼
+  procAction handler
+        │
+        ├─ Get-CimInstance (process details)
+        ├─ Get-AuthenticodeSignature (signature)
+        ├─ Get-FileHash (SHA256)
+        ├─ Test-UsmPathWhitelisted (whitelist check)
+        └─ Test-ProcessSuspicious (heuristics)
+              │
+              ├─ Write-UsmLog  →  security.log
+              ├─ Write-UsmNdjson  →  SIEM/siem.ndjson
+              ├─ Send-DiscordAlert  →  Discord webhook
+              ├─ Send-MailMessage  →  SMTP
+              └─ VirusTotal API lookup (optional)
+
+FileSystemWatcher (monitored folders)
+        │
+        ▼
+  fswAction handler
+        │
+        ├─ Write-UsmLog
+        ├─ File backup → Backup/
+        ├─ Write-UsmNdjson
+        ├─ Send-DiscordAlert
+        └─ Send-MailMessage
 ```
 
----
+### Configuration priority (highest wins)
 
-## Configuration layering
+1. Environment variables (`USM_*`)
+2. `monitor.config.json` in BaseFolder
+3. Module defaults
 
-Settings are resolved in this order (later layers win):
+### Log formats
 
-1. Hard-coded defaults (in `Get-UsmConfig`)
-2. `monitor.config.json` in `BaseFolder`
-3. Environment variables (`USM_*`)
-4. CLI parameters passed to `Start-UltraSecurityMonitor`
+**security.log** – tab-separated human-readable:
+```
+2024-01-15T10:23:45.123+00:00	[INFO]	Ultra Security Monitor started by ADMIN
+```
 
----
-
-## Log format
-
-All log entries are **NDJSON** (one JSON object per line):
-
+**SIEM/siem.ndjson** – newline-delimited JSON (one JSON object per line):
 ```json
-{"ts":"2024-01-15T10:30:00.000Z","level":"WARN","host":"PC01","user":"alice","message":"SUSPECT PROCESS | ...","event":"SuspiciousProcess","pid":1234,"path":"C:\\Temp\\evil.exe"}
+{"timestamp":"2024-01-15T10:23:45.123+00:00","host":"PC01","user":"ADMIN","event_type":"SuspiciousProcess","severity":"High","data":{...}}
 ```
 
-SIEM events in `SIEM/siem.json` use a similar schema with `event_type` and `severity` fields.
+## Component: Web dashboard
 
----
+Static HTML/JS served by `http-server ./web`.
 
-## Security design
+## Component: saas-app
 
-| Concern | Mitigation |
-|---|---|
-| Path traversal | `Assert-UsmSafePath` rejects destinations outside `BaseFolder` |
-| Credential leakage | No secrets in source; config + env vars only |
-| Privilege escalation | Monitor is read-only except within `BaseFolder` |
-| API key exposure | Keys only in `monitor.config.json` (gitignored) or env vars |
+Independent React + Node + Prisma scaffold in `saas-app/`.  
+It has its own CI in `saas-app/.github/workflows/`.

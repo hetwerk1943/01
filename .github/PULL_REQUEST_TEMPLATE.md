@@ -1,23 +1,26 @@
 ## Summary
 
-<!-- One-sentence description of the change. -->
-
-## Related issue
-
-Closes #
+<!-- A brief description of what this PR does -->
 
 ## Type of change
 
 - [ ] Bug fix
 - [ ] New feature
-- [ ] Refactor / code quality
+- [ ] Refactoring / code quality
 - [ ] Documentation
 - [ ] CI / tooling
 
 ## Checklist
 
-- [ ] Code follows the project style (PSScriptAnalyzer passes, no new warnings)
-- [ ] Tests added/updated for the changed code (Pester)
-- [ ] Documentation updated if behaviour changed
-- [ ] No secrets, API keys, or credentials committed
-- [ ] Backward-compatible (or breaking change is justified and documented)
+- [ ] My code follows the project style (PSScriptAnalyzer passes, `npm run smoke` passes)
+- [ ] I have added or updated tests where applicable
+- [ ] Documentation has been updated if needed
+- [ ] No secrets or sensitive data are committed
+
+## Testing
+
+<!-- Describe how the changes were tested -->
+
+## Related issues
+
+<!-- Closes #issue_number -->

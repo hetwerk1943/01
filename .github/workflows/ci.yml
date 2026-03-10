@@ -6,46 +6,47 @@ on:
   pull_request:
     branches: [ "main" ]
 
-permissions:
-  contents: read
-
 jobs:
-  # ── PowerShell: lint + unit tests (Windows) ───────────────────────────────
-  powershell:
-    name: PowerShell (lint + Pester)
+  powershell-quality:
+    name: PowerShell lint & test
     runs-on: windows-latest
-
+    permissions:
+      contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install PSScriptAnalyzer + Pester
+      - name: Install PSScriptAnalyzer and Pester
         shell: pwsh
         run: |
           Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -ErrorAction Stop
-          Install-Module Pester           -Force -Scope CurrentUser -ErrorAction Stop
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
 
-      - name: Lint – PSScriptAnalyzer
+      - name: Lint (PSScriptAnalyzer)
         shell: pwsh
         run: |
-          $results = Invoke-ScriptAnalyzer -Path src -Recurse -Severity Warning
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Severity Warning `
+            -ExcludeRule PSAvoidUsingWriteHost `
+            -ErrorAction Stop
           if ($results) {
-            $results | Select-Object ScriptName, Line, Severity, RuleName, Message | Format-Table -AutoSize
+            $results | Format-Table -AutoSize
             Write-Error "PSScriptAnalyzer found $($results.Count) issue(s)."
+            exit 1
           }
+          Write-Host "✅ PSScriptAnalyzer: no issues found."
 
-      - name: Test – Pester
+      - name: Test (Pester)
         shell: pwsh
         run: |
-          $cfg = New-PesterConfiguration
-          $cfg.Run.Path          = 'tests/powershell'
-          $cfg.Output.Verbosity  = 'Detailed'
-          $cfg.TestResult.Enabled    = $true
-          $cfg.TestResult.OutputPath = 'test-results.xml'
-          $result = Invoke-Pester -Configuration $cfg
+          $config = New-PesterConfiguration
+          $config.Run.Path       = 'tests/powershell'
+          $config.Output.Verbosity = 'Detailed'
+          $config.TestResult.Enabled    = $true
+          $config.TestResult.OutputPath = 'test-results.xml'
+          $result = Invoke-Pester -Configuration $config
           if ($result.FailedCount -gt 0) {
-            Write-Error "$($result.FailedCount) Pester test(s) failed."
+            Write-Error "Pester: $($result.FailedCount) test(s) failed."
+            exit 1
           }
 
       - name: Upload test results
@@ -55,14 +56,18 @@ jobs:
           name: pester-results
           path: test-results.xml
 
-  # ── Web smoke validation (Ubuntu) ─────────────────────────────────────────
   web-smoke:
-    name: Web smoke
+    name: Web smoke checks
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Run web smoke tests
-        run: bash tools/ci/web-smoke.sh
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run web smoke checks
+        run: node tools/ci/web-smoke.js

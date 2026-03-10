@@ -1,22 +1,19 @@
 # scripts/setup.ps1
-# One-time setup script: creates the runtime directory, copies an example config,
-# and optionally installs Pester + PSScriptAnalyzer for development.
+# First-time setup for Ultra Security Monitor.
+# Creates the runtime data directory and generates an example config file.
 
 #Requires -Version 5.1
-
 [CmdletBinding()]
 param(
-    [string]$BaseFolder = (Join-Path $env:USERPROFILE 'Documents\SecurityMonitor'),
-    [switch]$InstallDevTools
+    [string]$BaseFolder = (Join-Path $env:USERPROFILE 'Documents\SecurityMonitor')
 )
 
 $ErrorActionPreference = 'Stop'
 
 Write-Host '🔧 Ultra Security Monitor – Setup' -ForegroundColor Cyan
 
-# ── Create runtime directories ───────────────────────────────────────────────
-foreach ($sub in @('', 'Backup', 'SIEM')) {
-    $dir = if ($sub) { Join-Path $BaseFolder $sub } else { $BaseFolder }
+# Create runtime directories
+foreach ($dir in @($BaseFolder, (Join-Path $BaseFolder 'Backup'), (Join-Path $BaseFolder 'SIEM'))) {
     if (-not (Test-Path $dir)) {
         New-Item -Path $dir -ItemType Directory -Force | Out-Null
         Write-Host "  Created: $dir"
@@ -25,43 +22,28 @@ foreach ($sub in @('', 'Backup', 'SIEM')) {
     }
 }
 
-# ── Copy example config if no config present ────────────────────────────────
+# Copy example config if no config exists yet
 $configDest = Join-Path $BaseFolder 'monitor.config.json'
-$configSrc  = Join-Path $PSScriptRoot '..' 'configs' 'monitor.config.example.json'
 if (-not (Test-Path $configDest)) {
+    $configSrc = Join-Path $PSScriptRoot '..\configs\monitor.config.example.json'
     if (Test-Path $configSrc) {
-        Copy-Item -Path $configSrc -Destination $configDest
-        Write-Host "  Config created: $configDest"
-        Write-Host "  ⚠️  Edit $configDest to add API keys and customise settings." -ForegroundColor Yellow
-    } else {
-        Write-Warning "Example config not found at $configSrc – skipping."
+        Copy-Item -Path $configSrc -Destination $configDest -Force
+        Write-Host "  Config created at: $configDest"
+        Write-Host "  ⚠️  Edit $configDest and set values (or use environment variables)."
     }
-} else {
-    Write-Host "  Config exists: $configDest"
 }
 
-# ── Copy example whitelist if no whitelist present ───────────────────────────
+# Copy example whitelist if absent
 $wlDest = Join-Path $BaseFolder 'whitelist.json'
-$wlSrc  = Join-Path $PSScriptRoot '..' 'configs' 'whitelist.example.json'
 if (-not (Test-Path $wlDest)) {
+    $wlSrc = Join-Path $PSScriptRoot '..\configs\whitelist.example.json'
     if (Test-Path $wlSrc) {
-        Copy-Item -Path $wlSrc -Destination $wlDest
-        Write-Host "  Whitelist created: $wlDest"
+        Copy-Item -Path $wlSrc -Destination $wlDest -Force
+        Write-Host "  Whitelist created at: $wlDest"
     }
 }
 
-# ── Install dev tools (optional) ─────────────────────────────────────────────
-if ($InstallDevTools) {
-    Write-Host "`n📦 Installing development tools..." -ForegroundColor Cyan
-    foreach ($mod in @('Pester', 'PSScriptAnalyzer')) {
-        if (-not (Get-Module -ListAvailable -Name $mod)) {
-            Install-Module -Name $mod -Force -Scope CurrentUser
-            Write-Host "  Installed: $mod"
-        } else {
-            Write-Host "  Already installed: $mod"
-        }
-    }
-}
-
-Write-Host "`n✅ Setup complete." -ForegroundColor Green
-Write-Host "   Run: .\scripts\run-monitor.ps1 (as Administrator)"
+Write-Host ''
+Write-Host '✅ Setup complete.' -ForegroundColor Green
+Write-Host "   To start monitoring run: pwsh -File scripts\run-monitor.ps1"
+Write-Host "   Secrets must be provided via environment variables – see docs/QUICK_START.md"

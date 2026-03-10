@@ -1,79 +1,72 @@
 # Quick Start
 
-Get the Ultra Security Monitor running in under five minutes.
-
 ## Prerequisites
 
-| Requirement | Version |
-|---|---|
-| Windows | 10 / 11 / Server 2019+ |
-| PowerShell | 5.1 or 7.x |
-| Privileges | Administrator |
+- Windows 10/11 or Windows Server 2019+
+- PowerShell 5.1 or later (or PowerShell 7+)
+- Elevated (Administrator) privileges
 
-## 1 – Clone or download
+## 1. Clone the repository
 
 ```powershell
 git clone https://github.com/hetwerk1943/01.git
 cd 01
 ```
 
-## 2 – Run setup
+## 2. Run setup
 
 ```powershell
-.\scripts\setup.ps1
+pwsh -File scripts\setup.ps1
 ```
 
-This creates `%USERPROFILE%\Documents\SecurityMonitor\` and copies example
-configuration files.
+This creates `%USERPROFILE%\Documents\SecurityMonitor\` and copies example config files there.
 
-To also install development tools (Pester, PSScriptAnalyzer):
+## 3. Configure secrets via environment variables
 
-```powershell
-.\scripts\setup.ps1 -InstallDevTools
-```
-
-## 3 – Configure (optional)
-
-Edit `%USERPROFILE%\Documents\SecurityMonitor\monitor.config.json`:
-
-```json
-{
-  "DiscordWebhookUrl": "https://discord.com/api/webhooks/...",
-  "VirusTotalApiKey": "",
-  "EmailAlerts": false
-}
-```
-
-Sensitive values can also be provided via environment variables (they take
-precedence over the JSON file):
+**Never paste secrets into files that could be committed.**  
+Set environment variables in your session or in a `.env` file that is gitignored:
 
 | Variable | Purpose |
-|---|---|
-| `USM_DISCORD_WEBHOOK` | Discord webhook URL |
+|----------|---------|
+| `USM_DISCORD_WEBHOOK_URL` | Discord webhook URL for alerts |
 | `USM_VT_API_KEY` | VirusTotal API key |
-| `USM_BASE_FOLDER` | Override base folder |
+| `USM_SMTP_SERVER` | SMTP server hostname |
+| `USM_SMTP_FROM` | Sender e-mail address |
+| `USM_SMTP_TO` | Recipient e-mail address |
+| `USM_EMAIL_ALERTS` | Set to `true` to enable e-mail alerts |
+| `USM_BASE_FOLDER` | Override the runtime data directory |
+| `USM_MAX_LOG_SIZE_MB` | Maximum log size before rotation (default: 50) |
 
-## 4 – Start the monitor
-
-```powershell
-# As Administrator
-.\scripts\run-monitor.ps1
-```
-
-Press **Ctrl+C** to stop.
-
-## 5 – View logs
+Example (PowerShell):
 
 ```powershell
-# Live tail (NDJSON, one event per line)
-Get-Content "$env:USERPROFILE\Documents\SecurityMonitor\security.log" -Wait
+$env:USM_DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/...'
+$env:USM_VT_API_KEY          = 'your-virustotal-api-key'
 ```
 
-Open `dashboard.html` in your browser for a graphical view.
+## 4. Start the monitor
 
----
+```powershell
+pwsh -File scripts\run-monitor.ps1
+```
 
-## Next steps
+## 5. View the dashboard
 
-- See [docs/ARCHITECTURE.md](ARCHITECTURE.md) for a component overview.
-- See [docs/OPERATIONS.md](OPERATIONS.md) for scheduled tasks and alerting.
+```powershell
+npm start          # Serves the web/ directory on http://localhost:8080
+```
+
+Open <http://localhost:8080> in your browser.
+
+## Optional: Import the module directly
+
+```powershell
+Import-Module .\src\ultra-security-monitor\UltraSecurityMonitor.psd1
+Start-UltraSecurityMonitor
+```
+
+## Troubleshooting
+
+- **"Access denied" errors**: ensure you run as Administrator.
+- **PSScriptAnalyzer failures in CI**: run `Invoke-ScriptAnalyzer -Path . -Recurse -Severity Warning` locally to find issues before pushing.
+- **Log file location**: `%USERPROFILE%\Documents\SecurityMonitor\security.log`

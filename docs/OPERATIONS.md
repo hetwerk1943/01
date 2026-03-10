@@ -3,106 +3,80 @@
 ## Starting the monitor
 
 ```powershell
-# As Administrator
-.\scripts\run-monitor.ps1
+# Recommended: use the script wrapper
+pwsh -File scripts\run-monitor.ps1
+
+# Or: import the module directly
+Import-Module .\src\ultra-security-monitor\UltraSecurityMonitor.psd1
+Start-UltraSecurityMonitor
 ```
 
-### With custom config
+Both methods read configuration from `%USERPROFILE%\Documents\SecurityMonitor\monitor.config.json`  
+and then from environment variables (env vars override the file).
+
+## Runtime data directory
+
+Default: `%USERPROFILE%\Documents\SecurityMonitor\`
+
+| Path | Purpose |
+|------|---------|
+| `security.log` | Human-readable event log |
+| `security-report.txt` | Summary of suspicious events |
+| `SIEM/siem.ndjson` | Newline-delimited JSON (SIEM ingest) |
+| `Backup/` | File backups triggered by change events |
+| `monitor.config.json` | Runtime configuration (never commit secrets) |
+| `whitelist.json` | Process/path whitelist |
+
+## Log rotation
+
+Rotation is checked every 50 log writes.  
+When `security.log` exceeds `MaxLogSizeMB` (default 50 MB), it is renamed to  
+`security-YYYYMMDD-HHmmss.log` and a new empty `security.log` is created.
+
+## Viewing the dashboard
 
 ```powershell
-.\scripts\run-monitor.ps1 -ConfigPath 'D:\configs\usm-prod.json'
+npm start   # serves web/ on http://localhost:8080
 ```
 
-### With environment variable overrides
+## Master-agent tasks
 
 ```powershell
-$env:USM_DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/...'
-$env:USM_VT_API_KEY      = 'your-vt-key'
-.\scripts\run-monitor.ps1
+# Back up current logs
+pwsh -File scripts\run-monitor.ps1 -MasterAgent -BackupLogs
+
+# Check required files
+pwsh -File scripts\run-monitor.ps1 -MasterAgent -AutoEnhance
+
+# Update sponsor configuration check
+pwsh -File scripts\run-monitor.ps1 -MasterAgent -UpdateSponsors
 ```
 
----
+## Scheduled task (optional)
 
-## Scheduled Task (auto-start on login)
-
-Run the following as **Administrator**:
+Run as Administrator in PowerShell:
 
 ```powershell
-$scriptPath = (Resolve-Path '.\scripts\run-monitor.ps1').Path
-$action  = New-ScheduledTaskAction -Execute 'powershell.exe' `
-    -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$scriptPath`""
+$action  = New-ScheduledTaskAction -Execute 'pwsh.exe' `
+               -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$PWD\scripts\run-monitor.ps1`""
 $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
 Register-ScheduledTask -Action $action -Trigger $trigger `
     -TaskName 'UltraSecurityMonitor' -RunLevel Highest -Force
 ```
 
-Remove the scheduled task:
-
-```powershell
-Unregister-ScheduledTask -TaskName 'UltraSecurityMonitor' -Confirm:$false
-```
-
----
-
-## Log files
-
-| File | Location | Format |
-|---|---|---|
-| Main log | `BaseFolder\security.log` | NDJSON |
-| SIEM events | `BaseFolder\SIEM\siem.json` | NDJSON |
-| Suspect report | `BaseFolder\security-report.txt` | Plain text |
-| Archived logs | `BaseFolder\security-YYYYMMDD-HHmmss.log` | NDJSON |
-
-### Tailing logs
-
-```powershell
-Get-Content "$env:USERPROFILE\Documents\SecurityMonitor\security.log" -Wait
-```
-
-### Parsing NDJSON logs in PowerShell
-
-```powershell
-Get-Content "$env:USERPROFILE\Documents\SecurityMonitor\security.log" |
-    ForEach-Object { $_ | ConvertFrom-Json } |
-    Where-Object { $_.level -eq 'WARN' }
-```
-
----
-
-## Log rotation
-
-Rotation is automatic: when `security.log` exceeds `MaxLogSizeMB` (default 50 MB),
-it is archived as `security-YYYYMMDD-HHmmss.log`. A new `security.log` starts fresh.
-
-To change the threshold, set `MaxLogSizeMB` in `monitor.config.json` or
-`$env:USM_MAX_LOG_SIZE_MB`.
-
----
-
-## Alerting
-
-### Discord
-
-Set `DiscordWebhookUrl` in config or `$env:USM_DISCORD_WEBHOOK`.
-
-### E-mail
-
-Set `EmailAlerts: true` and configure SMTP settings in `monitor.config.json`.
-
-### VirusTotal
-
-Set `VirusTotalApiKey` in config or `$env:USM_VT_API_KEY`.
-Free tier: 4 requests/minute; consider upgrading for high-traffic environments.
-
----
-
 ## Troubleshooting
 
-| Symptom | Likely cause | Resolution |
-|---|---|---|
-| "Access denied" on folder watch | Not running as Administrator | Re-launch as Administrator |
-| WMI subscription fails | WMI service stopped | `Start-Service winmgmt` |
-| No Discord alerts | Empty webhook URL | Set `DiscordWebhookUrl` in config |
-| Log file not created | BaseFolder doesn't exist | Run `.\scripts\setup.ps1` |
-| AV flags the script | Heuristic match | Add script path to AV whitelist |
-| Script execution blocked | Execution policy | `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser` |
+| Symptom | Likely cause | Fix |
+|---------|-------------|-----|
+| `Register-WmiEvent failed` | Not running as Administrator | Re-run as Administrator |
+| Discord alerts not sent | `USM_DISCORD_WEBHOOK_URL` not set or URL is wrong | Verify env var / webhook URL |
+| Log file not created | BaseFolder not writable | Check directory permissions |
+| VirusTotal returns `null` | API key missing or quota exceeded | Set `USM_VT_API_KEY`; check VT dashboard |
+| PSScriptAnalyzer warnings in CI | Code quality issue | Run linter locally and fix |
+
+## Security notes
+
+- Never store secrets in `monitor.config.json` if the file could be committed.
+- The runtime data directory (`Documents\SecurityMonitor`) is gitignored.
+- Use `USM_*` environment variables for all secrets.
+- The safe-path guardrail (`Test-UsmSafePath`) prevents file operations outside `BaseFolder`.

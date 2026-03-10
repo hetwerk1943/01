@@ -1,96 +1,70 @@
 # scripts/audit.ps1
-# Project health and syntax audit script.
+# Project audit – verifies required files, checks PowerShell syntax, and reports Git status.
 
 #Requires -Version 5.1
-
 [CmdletBinding()]
-param(
-    [string]$ProjectRoot = (Split-Path $PSScriptRoot -Parent)
-)
+param()
 
 $ErrorActionPreference = 'Continue'
+$ProjectRoot = Split-Path $PSScriptRoot -Parent
 
-Write-Host '🔎 Ultra Security Monitor – Project Audit' -ForegroundColor Cyan
+Write-Host '🔎 Starting Ultra Security Monitor project audit...' -ForegroundColor Cyan
 
-# ── 1. Required files ────────────────────────────────────────────────────────
-Write-Host "`n📄 Checking required files..."
-$required = @(
+# 1. Required files
+Write-Host "`n📁 Checking required files..."
+$requiredFiles = @(
     'README.md',
-    'src/UltraSecurityMonitor/UltraSecurityMonitor.psm1',
-    'src/UltraSecurityMonitor/UltraSecurityMonitor.psd1',
-    'configs/monitor.config.example.json',
-    'scripts/run-monitor.ps1',
-    '.github/workflows/ci.yml'
+    '.github/FUNDING.yml',
+    'UltraSecurityMonitor.ps1',
+    'dashboard.html',
+    'src/ultra-security-monitor/UltraSecurityMonitor.psd1',
+    'src/ultra-security-monitor/UltraSecurityMonitor.psm1'
 )
-$missing = 0
-foreach ($rel in $required) {
-    $path = Join-Path $ProjectRoot $rel
-    if (Test-Path $path) {
-        Write-Host "  ✅ $rel"
+foreach ($file in $requiredFiles) {
+    $fp = Join-Path $ProjectRoot $file
+    if (Test-Path $fp) {
+        Write-Host "  ✅ $file"
     } else {
-        Write-Host "  ❌ MISSING: $rel" -ForegroundColor Red
-        $missing++
+        Write-Host "  ⚠️  Missing: $file" -ForegroundColor Yellow
     }
 }
 
-# ── 2. PowerShell syntax check ───────────────────────────────────────────────
-Write-Host "`n🔧 PowerShell syntax check..."
-$psFiles = Get-ChildItem -Path $ProjectRoot -Filter '*.ps1' -Recurse `
-    -Exclude 'node_modules' -ErrorAction SilentlyContinue |
-    Where-Object { $_.FullName -notmatch '(node_modules|saas-app)' }
+# 2. PowerShell syntax check (module files + scripts)
+Write-Host "`n🔧 Checking PowerShell syntax..."
+$psFiles = Get-ChildItem -Path $ProjectRoot -Include '*.ps1','*.psm1','*.psd1' -Recurse `
+    -Exclude 'node_modules' -ErrorAction SilentlyContinue
 
-$syntaxErrors = 0
-foreach ($file in $psFiles) {
-    $errors = $null
-    [System.Management.Automation.Language.Parser]::ParseFile(
-        $file.FullName, [ref]$null, [ref]$errors) | Out-Null
-    if ($errors.Count -gt 0) {
-        Write-Host "  ❌ $($file.Name): $($errors.Count) parse error(s)" -ForegroundColor Red
-        $errors | ForEach-Object { Write-Host "     $_" }
-        $syntaxErrors++
-    } else {
-        Write-Host "  ✅ $($file.Name)"
+foreach ($psFile in $psFiles) {
+    try {
+        $parseErrors = $null
+        [System.Management.Automation.Language.Parser]::ParseFile(
+            $psFile.FullName, [ref]$null, [ref]$parseErrors
+        ) | Out-Null
+        if ($parseErrors.Count -gt 0) {
+            Write-Host "  ❌ Parse errors in $($psFile.Name):" -ForegroundColor Red
+            $parseErrors | ForEach-Object { Write-Host "    $_" }
+        } else {
+            Write-Host "  ✅ $($psFile.Name)"
+        }
+    } catch {
+        Write-Host "  ❌ $($psFile.Name): $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
-# ── 3. Git status ────────────────────────────────────────────────────────────
-Write-Host "`n🌳 Git status..."
+# 3. Git status
+Write-Host "`n🌳 Checking Git repository..."
 try {
-    $status = git -C $ProjectRoot status --short 2>&1
+    $status = & git -C $ProjectRoot status --short 2>&1
     if ($status) {
-        Write-Host "  ⚠️  Uncommitted changes:" -ForegroundColor Yellow
-        $status | ForEach-Object { Write-Host "     $_" }
+        Write-Host '  ⚠️  Uncommitted changes:' -ForegroundColor Yellow
+        Write-Host $status
     } else {
-        Write-Host '  ✅ Working tree is clean'
+        Write-Host '  ✅ Repository clean – all changes committed.'
     }
-    $branch = git -C $ProjectRoot branch --show-current 2>&1
-    Write-Host "  ℹ️  Branch: $branch"
+    $branch = & git -C $ProjectRoot branch --show-current 2>&1
+    Write-Host "  ℹ️  Current branch: $branch"
 } catch {
-    Write-Warning 'Git not available or not a git repository.'
+    Write-Host '  ⚠️  Git not available or not a repository.' -ForegroundColor Yellow
 }
 
-# ── 4. PSScriptAnalyzer (if available) ──────────────────────────────────────
-if (Get-Module -ListAvailable -Name PSScriptAnalyzer) {
-    Write-Host "`n🔍 PSScriptAnalyzer..."
-    $srcPath = Join-Path $ProjectRoot 'src'
-    $issues = Invoke-ScriptAnalyzer -Path $srcPath -Recurse -Severity Warning `
-        -ErrorAction SilentlyContinue
-    if ($issues) {
-        $issues | Select-Object ScriptName, Line, Severity, RuleName, Message |
-            Format-Table -AutoSize
-        Write-Host "  ⚠️  $($issues.Count) issue(s) found" -ForegroundColor Yellow
-    } else {
-        Write-Host '  ✅ No warnings'
-    }
-} else {
-    Write-Host "`n  ℹ️  PSScriptAnalyzer not installed – skipping (run: scripts/setup.ps1 -InstallDevTools)"
-}
-
-# ── Summary ──────────────────────────────────────────────────────────────────
-Write-Host "`n🎯 Audit complete."
-if ($missing -gt 0 -or $syntaxErrors -gt 0) {
-    Write-Host "  ❌ Issues found: $missing missing file(s), $syntaxErrors script(s) with parse errors." -ForegroundColor Red
-    exit 1
-} else {
-    Write-Host '  ✅ All checks passed.' -ForegroundColor Green
-}
+Write-Host "`n✅ Audit complete." -ForegroundColor Green

@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "Static web apps for Ultra Security Monitor (served from ./web)",
   "scripts": {
-    "start": "http-server ./web -p 8080"
+    "start": "http-server ./web -p 8080 --cors",
+    "start:root": "http-server . -p 8080 --cors",
+    "smoke": "node tools/ci/web-smoke.js"
   },
   "devDependencies": {
     "http-server": "^14.1.1"

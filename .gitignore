@@ -24,17 +24,18 @@ TestResults.xml
 ### Node ###
 node_modules/
 package-lock.json
-### Ultra Security Monitor – runtime outputs (never commit) ###
+### Ultra Security Monitor – runtime artifacts ###
 security.log
 security-*.log
 security-report.txt
 SIEM/
 Backup/
+*.ndjson
+agent-backup-*/
+
+### Local configs with potential secrets ###
 monitor.config.json
 whitelist.json
 
-### Node ###
-dist/
-
-### Test results ###
-test-results.xml
+### Node (root) ###
+npm-debug.log*

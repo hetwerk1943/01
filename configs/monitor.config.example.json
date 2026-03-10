@@ -1,17 +1,21 @@
 {
-  "_comment": "Copy this file to monitor.config.json inside your BaseFolder and fill in real values. The filled-in copy is .gitignored – never commit it.",
+  "_comment": "Copy this file to your BaseFolder as monitor.config.json and fill in the values. DO NOT commit secrets – use environment variables instead (see docs/QUICK_START.md).",
   "BaseFolder": "",
   "MaxLogSizeMB": 50,
   "MaxDiscordMsgLength": 2000,
-  "DiscordWebhookUrl": "",
-  "VirusTotalApiKey": "",
   "EmailAlerts": false,
   "SmtpServer": "",
   "SmtpFrom": "",
   "SmtpTo": "",
   "SmtpUseSsl": true,
   "SmtpPort": 587,
-  "MonitoredFolders": [],
+  "MonitoredFolders": [
+    "%WINDIR%\\System32",
+    "%ProgramFiles%",
+    "%ProgramFiles(x86)%",
+    "%USERPROFILE%\\Documents",
+    "%USERPROFILE%\\Desktop"
+  ],
   "SuspiciousNames": [
     "wscript.exe",
     "cscript.exe",
@@ -24,6 +28,5 @@
     "*\\AppData\\Local\\Temp\\*",
     "*\\Temp\\*",
     "*\\AppData\\Roaming\\*"
-  ],
-  "DefaultWhitelist": []
+  ]
 }

@@ -1,88 +1,82 @@
 # Development Guide
 
-## Environment setup
+## Prerequisites
+
+- PowerShell 5.1+ (`$PSVersionTable.PSVersion`)
+- [Pester 5](https://pester.dev/docs/introduction/installation) (`Install-Module Pester -Scope CurrentUser`)
+- [PSScriptAnalyzer](https://github.com/PowerShell/PSScriptAnalyzer) (`Install-Module PSScriptAnalyzer -Scope CurrentUser`)
+- Node.js 18+ (for web smoke tests and dashboard serving)
+
+## Repository setup
 
 ```powershell
-# Clone and enter the repository
 git clone https://github.com/hetwerk1943/01.git
 cd 01
+npm install              # installs http-server (dev dependency)
+```
 
-# Install dev tools (Pester + PSScriptAnalyzer)
-.\scripts\setup.ps1 -InstallDevTools
+## Running tests locally
+
+### PowerShell tests (Pester)
+
+```powershell
+Invoke-Pester -Path tests/powershell -Output Detailed
+```
+
+### Web smoke checks
+
+```bash
+node tools/ci/web-smoke.js
+```
+
+### Lint (PSScriptAnalyzer)
+
+```powershell
+Invoke-ScriptAnalyzer -Path . -Recurse -Severity Warning
 ```
 
 ## Module structure
 
-The PowerShell module lives in `src/UltraSecurityMonitor/`.
+The PowerShell module lives in `src/ultra-security-monitor/`.
 
-- **Public/** – exported functions (one per file, verb-noun naming)
-- **Private/** – internal helpers (not exported)
-- The module root (`UltraSecurityMonitor.psm1`) dot-sources all files
-
-### Adding a new private helper
-
-1. Create `src/UltraSecurityMonitor/Private/Verb-UsmNoun.ps1`
-2. Follow the naming convention: `*-Usm*`
-3. Access module config via `$script:_config`
-4. Write tests in `tests/powershell/`
+- **Private/** – internal helpers, not exported.
+- **Public/** – exported functions, one file per function.
+- `UltraSecurityMonitor.psm1` – dot-sources everything in the correct order.
+- `UltraSecurityMonitor.psd1` – manifest, declares `FunctionsToExport`.
 
 ### Adding a new public function
 
-1. Create `src/UltraSecurityMonitor/Public/Verb-UltraSecurityNoun.ps1`
-2. Add the function name to `FunctionsToExport` in `UltraSecurityMonitor.psd1`
-3. Write tests
+1. Create `src/ultra-security-monitor/Public/Verb-UsmNoun.ps1`.
+2. Add `'Verb-UsmNoun'` to the `FunctionsToExport` list in `UltraSecurityMonitor.psd1`.
+3. Add tests in `tests/powershell/UltraSecurityMonitor.Tests.ps1`.
 
-## Running tests locally
+### Adding a new private helper
 
-```powershell
-# Run all Pester tests
-Invoke-Pester -Path tests/powershell -Output Detailed
+1. Create `src/ultra-security-monitor/Private/HelperName.ps1`.
+2. The module root picks it up automatically via glob.
 
-# Run a specific test file
-Invoke-Pester -Path tests/powershell/UltraSecurityMonitor.Tests.ps1
-```
+## Coding conventions
 
-## Linting
-
-```powershell
-# Lint the src/ directory
-Invoke-ScriptAnalyzer -Path src -Recurse -Severity Warning
-```
-
-Fix any warnings before opening a PR – CI will enforce this.
-
-## Web smoke test
-
-```bash
-bash tools/ci/web-smoke.sh
-```
-
-## Commit conventions
-
-Use conventional commits:
-
-```
-feat: add SMTP retry logic
-fix: correct path-safety check on UNC paths
-docs: update QUICK_START
-chore: bump PSScriptAnalyzer to 1.22
-```
-
-## Branch naming
-
-| Type | Pattern |
-|---|---|
-| Feature | `feat/short-description` |
-| Bug fix | `fix/short-description` |
-| Docs | `docs/short-description` |
-| Chore | `chore/short-description` |
+- Use `[CmdletBinding()]` on all functions.
+- Use `[OutputType([TypeName])]` when the return type is known.
+- Prefer named parameters over positional ones.
+- Use `Write-UsmLog` instead of bare `Add-Content` for log output.
+- Secrets: always read from config or environment variables; never hard-code.
+- Path safety: call `Assert-UsmSafePath` before any file write to runtime directories.
 
 ## CI
 
-The `ci.yml` workflow runs on every push and PR to `main`:
+See `.github/workflows/ci.yml`.  
+The workflow runs:
+1. `PSScriptAnalyzer` on all `.ps1`, `.psm1`, `.psd1` files.
+2. `Pester` on `tests/powershell/`.
+3. `node tools/ci/web-smoke.js` for web assets.
 
-1. **PSScriptAnalyzer** – lint PowerShell (`src/`)
-2. **Pester** – unit + integration tests (`tests/powershell/`)
-3. **Web smoke** – validate HTML entry points exist
+All checks must pass before a PR can be merged.
 
-Ensure all three jobs pass before requesting review.
+## Branching strategy
+
+- `main` – stable, protected branch.
+- Feature branches: `feature/<short-description>`.
+- Bug fixes: `fix/<short-description>`.
+- Open a PR against `main` and fill in the PR template.
