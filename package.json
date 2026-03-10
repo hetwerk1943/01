@@ -3,9 +3,7 @@
   "version": "1.0.0",
   "description": "Ultra Security Monitor – dashboard and AI agent served locally",
   "scripts": {
-    "start": "http-server ./web -p 8080 --cors",
-    "start:root": "http-server . -p 8080 --cors",
-    "smoke": "node tools/ci/web-smoke.js"
+    "start": "http-server . -p 8080 --cors"
   },
   "devDependencies": {
     "http-server": "^14.1.1"
