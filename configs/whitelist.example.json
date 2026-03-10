@@ -1,7 +1,7 @@
 [
-  "%WINDIR%\\*",
-  "%ProgramFiles%\\*",
-  "%ProgramFiles(x86)%\\*",
+  "C:\\Windows\\*",
+  "C:\\Program Files\\*",
+  "C:\\Program Files (x86)\\*",
   "*\\OneDrive\\*",
   "*\\Steam\\*",
   "*\\ProtonVPN\\*",
