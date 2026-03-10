@@ -3,14 +3,14 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install dependencies
-COPY package*.json ./
+# Install dependencies (build context is saas-app root)
+COPY server/package*.json ./
 RUN npm ci
 
 # Copy source and build
-COPY tsconfig.json ./
-COPY prisma ./prisma
-COPY src ./src
+COPY server/tsconfig.json ./
+COPY server/prisma ./prisma
+COPY server/src ./src
 RUN npx prisma generate
 RUN npm run build
 
@@ -22,13 +22,13 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 # Install only production dependencies
-COPY package*.json ./
+COPY server/package*.json ./
 RUN npm ci --omit=dev
 
 # Copy Prisma client and compiled output
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/dist ./dist
-COPY prisma ./prisma
+COPY server/prisma ./prisma
 
 EXPOSE 4000
 

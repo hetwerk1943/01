@@ -1,10 +1,10 @@
 # Tests
 
-Integration tests are located in `../server/tests/integration/`.
+Integration tests are located in `server/tests/integration/`.
 
-They are run from the `server/` directory:
+Run from the `saas-app/` root:
 
 ```bash
-cd ../server
+cd server
 npm test
 ```

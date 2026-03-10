@@ -9,6 +9,12 @@ dist/
 build/
 .vite/
 
+# Compiled test files (tests run via ts-jest, no compilation needed)
+server/tests/**/*.js
+server/tests/**/*.js.map
+server/tests/**/*.d.ts
+server/tests/**/*.d.ts.map
+
 # Environment files (never commit secrets)
 .env
 .env.local
