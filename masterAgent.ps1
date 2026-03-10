@@ -1,6 +1,7 @@
 # masterAgent.ps1
-# Ultra Security Monitor – Master Agent
-# Wywołaj z parametrami: -UpdateSponsors, -BackupLogs, -AutoEnhance, -MarketAnalysis
+# Preserved for backward compatibility – delegates to scripts/audit.ps1 for
+# project checks and provides the same switch-based interface.
+# Deprecation notice: use .\scripts\audit.ps1 for auditing tasks.
 
 #Requires -Version 5.1
 
@@ -11,36 +12,35 @@ param(
     [switch]$MarketAnalysis
 )
 
-$ErrorActionPreference = "Continue"
+$ErrorActionPreference = 'Continue'
 $ProjectRoot = $PSScriptRoot
 
 function Write-AgentLog {
-    param([string]$Msg, [string]$Level = "INFO")
-    $ts = (Get-Date).ToString("o")
-    Write-Host "[$ts] [$Level] $Msg"
+    param([string]$Msg, [string]$Level = 'INFO')
+    Write-Host "[$((Get-Date).ToString('o'))] [$Level] $Msg"
 }
 
-# --------- UPDATE SPONSORS ---------
+Write-Warning "masterAgent.ps1: this root-level shim is deprecated. Use .\scripts\audit.ps1 for project checks."
+
 if ($UpdateSponsors) {
-    Write-AgentLog "Running UpdateSponsors..."
-    $fundingPath = Join-Path $ProjectRoot ".github" "FUNDING.yml"
+    Write-AgentLog 'Running UpdateSponsors...'
+    $fundingPath = Join-Path $ProjectRoot '.github' 'FUNDING.yml'
     if (Test-Path $fundingPath) {
-        Write-AgentLog "FUNDING.yml found – sponsors configuration is up to date."
+        Write-AgentLog 'FUNDING.yml found – sponsors configuration is up to date.'
     } else {
-        Write-AgentLog "FUNDING.yml not found." "WARN"
+        Write-AgentLog 'FUNDING.yml not found.' 'WARN'
     }
-    Write-AgentLog "UpdateSponsors completed."
+    Write-AgentLog 'UpdateSponsors completed.'
 }
 
-# --------- BACKUP LOGS ---------
 if ($BackupLogs) {
-    Write-AgentLog "Running BackupLogs..."
+    Write-AgentLog 'Running BackupLogs...'
     $logSources = @(
-        (Join-Path $ProjectRoot "security.log"),
-        (Join-Path $ProjectRoot "security-report.txt"),
-        (Join-Path $ProjectRoot "SIEM" "siem.json")
+        (Join-Path $env:USERPROFILE 'Documents\SecurityMonitor\security.log'),
+        (Join-Path $env:USERPROFILE 'Documents\SecurityMonitor\security-report.txt'),
+        (Join-Path $env:USERPROFILE 'Documents\SecurityMonitor\SIEM\siem.json')
     )
-    $backupDir = Join-Path $ProjectRoot ("agent-backup-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
+    $backupDir = Join-Path $ProjectRoot ('agent-backup-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
     foreach ($src in $logSources) {
         if (Test-Path $src) {
             if (-not (Test-Path $backupDir)) {
@@ -52,75 +52,30 @@ if ($BackupLogs) {
         }
     }
     if (-not (Test-Path $backupDir)) {
-        Write-AgentLog "No log files found to back up." "INFO"
+        Write-AgentLog 'No log files found to back up.' 'INFO'
     } else {
         Write-AgentLog "BackupLogs completed. Backup dir: $backupDir"
     }
 }
 
-# --------- AUTO ENHANCE ---------
 if ($AutoEnhance) {
-    Write-AgentLog "Running AutoEnhance..."
-
-    # Verify key project files exist
-    $requiredFiles = @(
-        "UltraSecurityMonitor.ps1",
-        "dashboard.html",
-        "agent.html",
-        "README.md",
-        "Audit-Project.ps1"
-    )
-    $missing = @()
-    foreach ($f in $requiredFiles) {
-        $fp = Join-Path $ProjectRoot $f
-        if (-not (Test-Path $fp)) { $missing += $f }
-    }
-    if ($missing.Count -gt 0) {
-        Write-AgentLog "Missing project files: $($missing -join ', ')" "WARN"
-    } else {
-        Write-AgentLog "All required project files are present."
-    }
-
-    # Check PowerShell script syntax
-    $psScripts = Get-ChildItem -Path $ProjectRoot -Filter "*.ps1" -ErrorAction SilentlyContinue
-    foreach ($script in $psScripts) {
-        $parseErrors = $null
-        [System.Management.Automation.Language.Parser]::ParseFile(
-            $script.FullName,
-            [ref]$null,
-            [ref]$parseErrors
-        ) | Out-Null
-        if ($parseErrors.Count -gt 0) {
-            Write-AgentLog "Syntax errors in $($script.Name): $($parseErrors -join '; ')" "WARN"
-        } else {
-            Write-AgentLog "Syntax OK: $($script.Name)"
-        }
-    }
-
-    Write-AgentLog "AutoEnhance completed."
+    Write-AgentLog 'Running AutoEnhance (delegating to scripts/audit.ps1)...'
+    & (Join-Path $ProjectRoot 'scripts' 'audit.ps1')
 }
 
-# --------- MARKET ANALYSIS ---------
 if ($MarketAnalysis) {
-    Write-AgentLog "Running MarketAnalysis..."
-
+    Write-AgentLog 'Running MarketAnalysis...'
     $stats = [ordered]@{
-        PowerShellScripts = (Get-ChildItem $ProjectRoot -Filter "*.ps1" -ErrorAction SilentlyContinue).Count
-        HtmlFiles         = (Get-ChildItem $ProjectRoot -Filter "*.html" -Recurse -ErrorAction SilentlyContinue).Count
-        JsFiles           = (Get-ChildItem $ProjectRoot -Filter "*.js"   -Recurse -ErrorAction SilentlyContinue).Count
-        CssFiles          = (Get-ChildItem $ProjectRoot -Filter "*.css"  -Recurse -ErrorAction SilentlyContinue).Count
-        WorkflowFiles     = (Get-ChildItem (Join-Path $ProjectRoot ".github" "workflows") -Filter "*.yml" -ErrorAction SilentlyContinue).Count
+        PowerShellScripts = (Get-ChildItem $ProjectRoot -Filter '*.ps1' -ErrorAction SilentlyContinue).Count
+        HtmlFiles         = (Get-ChildItem $ProjectRoot -Filter '*.html' -Recurse -ErrorAction SilentlyContinue).Count
+        JsFiles           = (Get-ChildItem $ProjectRoot -Filter '*.js'   -Recurse -ErrorAction SilentlyContinue).Count
+        WorkflowFiles     = (Get-ChildItem (Join-Path $ProjectRoot '.github' 'workflows') -Filter '*.yml' -ErrorAction SilentlyContinue).Count
     }
-
-    Write-AgentLog "Project statistics:"
-    foreach ($key in $stats.Keys) {
-        Write-AgentLog "  ${key}: $($stats[$key])"
-    }
-
-    Write-AgentLog "MarketAnalysis completed."
+    foreach ($key in $stats.Keys) { Write-AgentLog "  ${key}: $($stats[$key])" }
+    Write-AgentLog 'MarketAnalysis completed.'
 }
 
 if (-not ($UpdateSponsors -or $BackupLogs -or $AutoEnhance -or $MarketAnalysis)) {
-    Write-AgentLog "No action specified. Use -UpdateSponsors, -BackupLogs, -AutoEnhance, or -MarketAnalysis."
+    Write-AgentLog 'No action specified. Use -UpdateSponsors, -BackupLogs, -AutoEnhance, or -MarketAnalysis.'
     exit 1
 }

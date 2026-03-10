@@ -1,0 +1,45 @@
+name: Feature request
+description: Suggest a new feature or improvement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement!
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What problem does this feature solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe what you'd like to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any other approaches you've considered?
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected component
+      options:
+        - PowerShell module (src/UltraSecurityMonitor)
+        - Scripts (scripts/)
+        - Web dashboard (web/)
+        - SaaS app (saas-app/)
+        - CI / GitHub Actions
+        - Documentation
+        - Other
+    validations:
+      required: true

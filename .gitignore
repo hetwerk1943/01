@@ -24,3 +24,17 @@ TestResults.xml
 ### Node ###
 node_modules/
 package-lock.json
+### Ultra Security Monitor – runtime outputs (never commit) ###
+security.log
+security-*.log
+security-report.txt
+SIEM/
+Backup/
+monitor.config.json
+whitelist.json
+
+### Node ###
+dist/
+
+### Test results ###
+test-results.xml

@@ -1,9 +1,9 @@
 {
-  "name": "ultra-security-monitor",
+  "name": "ultra-security-monitor-web",
   "version": "1.0.0",
-  "description": "Ultra Security Monitor – dashboard and AI agent served locally",
+  "description": "Static web apps for Ultra Security Monitor (served from ./web)",
   "scripts": {
-    "start": "http-server . -p 8080 --cors"
+    "start": "http-server ./web -p 8080"
   },
   "devDependencies": {
     "http-server": "^14.1.1"
