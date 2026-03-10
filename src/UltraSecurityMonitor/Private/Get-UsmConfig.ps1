@@ -79,9 +79,23 @@ function Get-UsmConfig {
             $cfgKey = $envMap[$envKey]
             # Type coercion for known numeric / boolean keys
             switch ($cfgKey) {
-                'MaxLogSizeMB' { $cfg[$cfgKey] = [double]$val }
+                'MaxLogSizeMB' {
+                    $parsed = 0.0
+                    if ([double]::TryParse($val, [ref]$parsed)) {
+                        $cfg[$cfgKey] = $parsed
+                    } else {
+                        Write-Warning "Get-UsmConfig: environment variable $envKey='$val' is not a valid number for $cfgKey; keeping default value '$($cfg[$cfgKey])'."
+                    }
+                }
                 'EmailAlerts'  { $cfg[$cfgKey] = $val -in @('1','true','yes') }
-                'SmtpPort'     { $cfg[$cfgKey] = [int]$val }
+                'SmtpPort'     {
+                    $parsedPort = 0
+                    if ([int]::TryParse($val, [ref]$parsedPort)) {
+                        $cfg[$cfgKey] = $parsedPort
+                    } else {
+                        Write-Warning "Get-UsmConfig: environment variable $envKey='$val' is not a valid integer for $cfgKey; keeping default value '$($cfg[$cfgKey])'."
+                    }
+                }
                 default        { $cfg[$cfgKey] = $val }
             }
         }
