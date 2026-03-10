@@ -117,7 +117,7 @@ function Start-UltraSecurityMonitor {
                     -Value ("`n`n$(Get-Date -Format o)`n$msg")
                 Write-UsmSiemEvent -EventType 'SuspiciousProcess' -Severity 'High' -Data @{
                     name        = $details.Name
-                    pid         = $pid_
+                    pid         = $eventPid
                     path        = $path
                     hash        = $hash
                     sig         = $sigStatus
