@@ -19,7 +19,7 @@ function Write-UsmSiemEvent {
     }
 
     try {
-        Add-Content -Path $script:_config.SiemLogPath `
+        Add-Content -Path $script:_config.SiemLogPath -Encoding utf8 `
             -Value ($event | ConvertTo-Json -Compress) -ErrorAction Stop
     } catch {
         Write-UsmLog -Message "Write-UsmSiemEvent failed: $_" -Level WARN
