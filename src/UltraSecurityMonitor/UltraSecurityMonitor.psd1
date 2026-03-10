@@ -1,8 +1,8 @@
 @{
     # Module metadata
     RootModule        = 'UltraSecurityMonitor.psm1'
-    ModuleVersion     = '2.0.0'
-    GUID              = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+    ModuleVersion     = '2.0.1'
+    GUID              = 'f3c9d1b2-4e7a-4a55-9d2b-224c6e1a9f23'
     Author            = 'Ultra Security Monitor Contributors'
     Description       = 'Windows security monitor: file-system and process surveillance with Discord/Email/SIEM integration.'
     PowerShellVersion = '5.1'
