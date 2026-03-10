@@ -15,8 +15,8 @@ body {
   border-radius: 10px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   padding: 2rem 2.5rem;
-  max-width: 520px;
-  width: 90%;
+  max-width: 560px;
+  width: 92%;
   text-align: center;
 }
 
@@ -26,8 +26,48 @@ h1 {
   color: #24292e;
 }
 
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.control {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #444;
+  text-align: left;
+}
+
+.control select {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #d1d5da;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  min-width: 180px;
+}
+
+.control.checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 1.45rem;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
 button {
-  padding: 0.6rem 1.4rem;
+  padding: 0.6rem 1.2rem;
   background: #0366d6;
   color: #fff;
   border: none;
@@ -40,10 +80,33 @@ button {
 button:hover { background: #0256b4; }
 button:disabled { background: #6c757d; cursor: not-allowed; }
 
+/* Optional link/button style the user provided */
+.button {
+  display: inline-block;
+  padding: 12px 24px;
+  background: #238636;
+  color: white;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.button:hover {
+  background: #2ea043;
+}
+
 #joke {
   margin-top: 1.25rem;
   font-size: 1rem;
-  color: #444;
-  min-height: 3rem;
+  color: #222;
+  min-height: 3.2rem;
   line-height: 1.6;
+  word-break: break-word;
+}
+
+.status {
+  margin-top: 0.6rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+  min-height: 1.1rem;
 }
