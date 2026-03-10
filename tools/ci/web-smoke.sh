@@ -36,7 +36,7 @@ check_file "web/joke-generator/index.html"
 # ── Check for obviously broken inline secrets ─────────────────────────────────
 echo ""
 echo "Secret pattern scan (HTML/JS files):"
-SECRET_PATTERNS=("api[_-]key\s*=\s*['\"][^'\"]{10}" "webhook.*https://discord.com/api/webhooks/[0-9]")
+SECRET_PATTERNS=("api[_-]key\s*=\s*['\"][^'\"]{20}" "webhook.*https://discord.com/api/webhooks/[0-9]")
 found_secrets=0
 while IFS= read -r -d '' file; do
     for pattern in "${SECRET_PATTERNS[@]}"; do

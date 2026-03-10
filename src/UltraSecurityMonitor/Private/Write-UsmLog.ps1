@@ -31,7 +31,8 @@ function Write-UsmLog {
         return
     }
 
-    # Rotate every 50 writes
+    # Check log size every 50 writes to balance responsiveness with file I/O overhead.
+    # Checking on every write would add unnecessary file-stat overhead in high-event environments.
     $script:_logWriteCount = ($script:_logWriteCount + 1) % 50
     if ($script:_logWriteCount -eq 0) {
         Invoke-UsmLogRotation -LogPath $logPath -MaxSizeMB $maxSizeMB -BaseFolder $baseFolder

@@ -1,6 +1,6 @@
 {
-  "_comment": "Copy this file to monitor.config.json inside your BaseFolder and customise.",
-  "BaseFolder": "%USERPROFILE%\\Documents\\SecurityMonitor",
+  "_comment": "Copy this file to monitor.config.json inside your BaseFolder and fill in real values. The filled-in copy is .gitignored – never commit it.",
+  "BaseFolder": "",
   "MaxLogSizeMB": 50,
   "MaxDiscordMsgLength": 2000,
   "DiscordWebhookUrl": "",
@@ -11,13 +11,7 @@
   "SmtpTo": "",
   "SmtpUseSsl": true,
   "SmtpPort": 587,
-  "MonitoredFolders": [
-    "%WINDIR%\\System32",
-    "%ProgramFiles%",
-    "%ProgramFiles(x86)%",
-    "%USERPROFILE%\\Documents",
-    "%USERPROFILE%\\Desktop"
-  ],
+  "MonitoredFolders": [],
   "SuspiciousNames": [
     "wscript.exe",
     "cscript.exe",
@@ -31,12 +25,5 @@
     "*\\Temp\\*",
     "*\\AppData\\Roaming\\*"
   ],
-  "DefaultWhitelist": [
-    "%WINDIR%\\*",
-    "%ProgramFiles%\\*",
-    "%ProgramFiles(x86)%\\*",
-    "*\\OneDrive\\*",
-    "*\\Steam\\*",
-    "*\\ProtonVPN\\*"
-  ]
+  "DefaultWhitelist": []
 }

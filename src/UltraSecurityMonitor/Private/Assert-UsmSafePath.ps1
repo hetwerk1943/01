@@ -15,10 +15,13 @@ function Assert-UsmSafePath {
         [Parameter(Mandatory)][string]$BaseFolder
     )
 
-    # Resolve to absolute without requiring the path to exist yet
-    $resolvedTarget = [System.IO.Path]::GetFullPath($Path)
-    $resolvedBase   = [System.IO.Path]::GetFullPath($BaseFolder).TrimEnd([System.IO.Path]::DirectorySeparatorChar) `
-                      + [System.IO.Path]::DirectorySeparatorChar
+    try {
+        $resolvedTarget = [System.IO.Path]::GetFullPath($Path)
+        $resolvedBase   = [System.IO.Path]::GetFullPath($BaseFolder).TrimEnd([System.IO.Path]::DirectorySeparatorChar) `
+                          + [System.IO.Path]::DirectorySeparatorChar
+    } catch {
+        throw "Path safety violation: could not resolve path '$Path' – $_"
+    }
 
     if (-not $resolvedTarget.StartsWith($resolvedBase, [System.StringComparison]::OrdinalIgnoreCase)) {
         throw "Path safety violation: '$resolvedTarget' is outside the allowed base folder '$resolvedBase'."

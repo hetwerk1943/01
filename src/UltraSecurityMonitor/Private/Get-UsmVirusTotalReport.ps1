@@ -14,7 +14,7 @@ function Get-UsmVirusTotalReport {
         $uri     = "https://www.virustotal.com/api/v3/files/$Hash"
         $headers = @{ 'x-apikey' = $apiKey }
         $resp    = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get `
-                       -TimeoutSec 15 -ErrorAction Stop
+                       -TimeoutSec 10 -ErrorAction Stop
         $stats   = $resp.data.attributes.last_analysis_stats
         if ($null -eq $stats) { return $null }
         return [PSCustomObject]@{

@@ -83,21 +83,21 @@ function Start-UltraSecurityMonitor {
     $procAction = {
         try {
             $evt     = $Event.SourceEventArgs.NewEvent
-            $pid_    = [int]$evt.ProcessID
+            $eventPid = [int]$evt.ProcessID
             Start-Sleep -Milliseconds 300
-            $details = Get-UsmProcDetails -Pid $pid_
+            $details = Get-UsmProcDetails -Pid $eventPid
             if ($null -eq $details) {
-                Write-UsmLog -Message "Process $($evt.ProcessName) PID $pid_ (details unavailable)"
+                Write-UsmLog -Message "Process $($evt.ProcessName) PID $eventPid (details unavailable)"
                 return
             }
 
             $path      = $details.Path
             $sigStatus = Get-UsmFileSignature -FilePath $path
             $hash      = Get-UsmFileHashSafe  -FilePath $path
-            $network   = Get-UsmNetworkConnsForPid -Pid $pid_
+            $network   = Get-UsmNetworkConnsForPid -Pid $eventPid
 
             if (Test-UsmProcessSuspicious -ProcName $details.Name -FilePath $path) {
-                $msg = "SUSPECT PROCESS | Name: $($details.Name) | PID: $pid_ | Owner: $($details.Owner) | Path: $path | Sig: $sigStatus | SHA256: $hash | Cmd: $($details.CommandLine)"
+                $msg = "SUSPECT PROCESS | Name: $($details.Name) | PID: $eventPid | Owner: $($details.Owner) | Path: $path | Sig: $sigStatus | SHA256: $hash | Cmd: $($details.CommandLine)"
                 if ($null -ne $network -and $null -ne $network.TCP) {
                     $tcpSummary = ($network.TCP |
                         Select-Object LocalAddress, LocalPort, RemoteAddress, RemotePort, State |
@@ -112,7 +112,7 @@ function Start-UltraSecurityMonitor {
                     }
                 }
 
-                Write-UsmLog -Message $msg -Level WARN -Fields @{ event = 'SuspiciousProcess'; pid = $pid_; path = $path }
+                Write-UsmLog -Message $msg -Level WARN -Fields @{ event = 'SuspiciousProcess'; pid = $eventPid; path = $path }
                 Add-Content -Path $script:_config.ReportPath `
                     -Value ("`n`n$(Get-Date -Format o)`n$msg")
                 Write-UsmSiemEvent -EventType 'SuspiciousProcess' -Severity 'High' -Data @{
