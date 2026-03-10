@@ -110,3 +110,57 @@ button:disabled { background: #6c757d; cursor: not-allowed; }
   color: #6b7280;
   min-height: 1.1rem;
 }
+
+/* ---- Additional styles requested ---- */
+.card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  padding: 25px;
+  border-radius: 10px;
+  margin: 20px auto;
+  max-width: 900px;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.card:hover {
+  transform: translateY(-3px);
+  border-color: #58a6ff;
+}
+
+.section-title {
+  font-size: 32px;
+  color: #58a6ff;
+  margin-bottom: 10px;
+  position: relative;
+  display: inline-block;
+}
+.section-title::after {
+  content: "";
+  display: block;
+  height: 3px;
+  width: 60%;
+  background: #30363d;
+  margin: 8px auto 0;
+}
+
+.icon-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
+}
+.icon-item {
+  background: #161b22;
+  padding: 12px 18px;
+  border-radius: 8px;
+  border: 1px solid #30363d;
+  font-size: 18px;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  margin-top: 40px;
+  border-top: 1px solid #30363d;
+  color: #8b949e;
+  text-shadow: 0 0 4px #000;
+}
