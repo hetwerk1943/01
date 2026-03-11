@@ -36,16 +36,24 @@ function Send-UsmEmailAlert {
         [string]::IsNullOrWhiteSpace($cfg.SmtpTo)) { return }
 
     try {
-        $params = @{
-            To         = $cfg.SmtpTo
-            From       = $cfg.SmtpFrom
-            Subject    = $Subject
-            Body       = $Body
-            SmtpServer = $cfg.SmtpServer
-            Port       = $cfg.SmtpPort
-            UseSsl     = $cfg.SmtpUseSsl
-        }
-        Send-MailMessage @params -ErrorAction Stop
+        $mailMessage = [System.Net.Mail.MailMessage]::new(
+            $cfg.SmtpFrom,
+            $cfg.SmtpTo,
+            $Subject,
+            $Body
+        )
+
+        $smtpClient = [System.Net.Mail.SmtpClient]::new(
+            $cfg.SmtpServer,
+            [int]$cfg.SmtpPort
+        )
+
+        $smtpClient.EnableSsl = [bool]$cfg.SmtpUseSsl
+
+        $smtpClient.Send($mailMessage)
+
+        $mailMessage.Dispose()
+        $smtpClient.Dispose()
     } catch {
         Write-UsmLog -Message "Send-UsmEmailAlert failed: $_" -Level WARN
     }
