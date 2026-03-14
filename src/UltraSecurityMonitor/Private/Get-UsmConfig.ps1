@@ -64,14 +64,15 @@ function Get-UsmConfig {
 
     # ── 3. Environment variables ────────────────────────────────────────────
     $envMap = @{
-        USM_BASE_FOLDER        = 'BaseFolder'
-        USM_DISCORD_WEBHOOK    = 'DiscordWebhookUrl'
-        USM_VT_API_KEY         = 'VirusTotalApiKey'
-        USM_EMAIL_ALERTS       = 'EmailAlerts'
-        USM_SMTP_SERVER        = 'SmtpServer'
-        USM_SMTP_FROM          = 'SmtpFrom'
-        USM_SMTP_TO            = 'SmtpTo'
-        USM_MAX_LOG_SIZE_MB    = 'MaxLogSizeMB'
+        USM_BASE_FOLDER         = 'BaseFolder'
+        USM_DISCORD_WEBHOOK     = 'DiscordWebhookUrl'
+        USM_DISCORD_WEBHOOK_URL = 'DiscordWebhookUrl'
+        USM_VT_API_KEY          = 'VirusTotalApiKey'
+        USM_EMAIL_ALERTS        = 'EmailAlerts'
+        USM_SMTP_SERVER         = 'SmtpServer'
+        USM_SMTP_FROM           = 'SmtpFrom'
+        USM_SMTP_TO             = 'SmtpTo'
+        USM_MAX_LOG_SIZE_MB     = 'MaxLogSizeMB'
     }
     foreach ($envKey in $envMap.Keys) {
         $val = [System.Environment]::GetEnvironmentVariable($envKey)
