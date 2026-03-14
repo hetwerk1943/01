@@ -103,7 +103,7 @@ function Get-UsmConfig {
 
     # ── 4. CLI overrides (explicit parameters) ──────────────────────────────
     foreach ($key in $Overrides.Keys) {
-        if ($cfg.ContainsKey($key)) { $cfg[$key] = $Overrides[$key] }
+        if ($cfg.Contains($key)) { $cfg[$key] = $Overrides[$key] }
     }
 
     # ── 5. Derive runtime paths from BaseFolder ─────────────────────────────
