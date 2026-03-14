@@ -45,6 +45,11 @@ function Get-UsmFileSignature {
 function Get-UsmFileHashSafe {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$FilePath)
+
+    if ([string]::IsNullOrWhiteSpace($FilePath)) {
+        return $null
+    }
+
     try {
         if (Test-Path $FilePath) {
             return (Get-FileHash -Path $FilePath -Algorithm SHA256 -ErrorAction Stop).Hash
