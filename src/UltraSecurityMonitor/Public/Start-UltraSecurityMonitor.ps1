@@ -150,6 +150,26 @@ function Register-UsmFolderMonitor {
 
     if (-not (Test-Path $Folder)) { return }
 
+    # Use a stable SourceIdentifier per folder so we can clean up on re-registration
+    $sourceId = "USM-FolderMonitor-$Folder"
+
+    # Clean up any existing subscribers/watchers for this folder
+    Get-EventSubscriber -SourceIdentifier $sourceId -ErrorAction SilentlyContinue | ForEach-Object {
+        try {
+            if ($_.SourceObject -is [System.IO.FileSystemWatcher]) {
+                $_.SourceObject.EnableRaisingEvents = $false
+                $_.SourceObject.Dispose()
+            }
+        } catch {
+            # Swallow cleanup errors to avoid impacting registration
+        }
+        try {
+            Unregister-Event -SubscriptionId $_.SubscriptionId -ErrorAction SilentlyContinue
+        } catch {
+            # Best-effort cleanup
+        }
+    }
+
     try {
         $fsw = New-Object System.IO.FileSystemWatcher $Folder -Property @{
             IncludeSubdirectories = $true
@@ -172,9 +192,9 @@ function Register-UsmFolderMonitor {
             Send-UsmEmailAlert   -Subject 'File Change Alert' -Body $msg
         }
 
-        Register-ObjectEvent -InputObject $fsw -EventName Created -Action $action | Out-Null
-        Register-ObjectEvent -InputObject $fsw -EventName Changed -Action $action | Out-Null
-        Register-ObjectEvent -InputObject $fsw -EventName Renamed -Action $action | Out-Null
+        Register-ObjectEvent -InputObject $fsw -EventName Created -SourceIdentifier $sourceId -Action $action | Out-Null
+        Register-ObjectEvent -InputObject $fsw -EventName Changed -SourceIdentifier $sourceId -Action $action | Out-Null
+        Register-ObjectEvent -InputObject $fsw -EventName Renamed -SourceIdentifier $sourceId -Action $action | Out-Null
         $fsw.EnableRaisingEvents = $true
     } catch {
         Write-UsmLog -Message "Register-UsmFolderMonitor error for ${Folder}: $_" -Level ERROR
