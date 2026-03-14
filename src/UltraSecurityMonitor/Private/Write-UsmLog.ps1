@@ -25,7 +25,7 @@ function Write-UsmLog {
     $line = $entry | ConvertTo-Json -Compress
 
     try {
-        Add-Content -Path $logPath -Value $line -ErrorAction Stop
+        Add-Content -Path $logPath -Value $line -Encoding utf8 -ErrorAction Stop
     } catch {
         Write-Warning "Write-UsmLog: could not write to $logPath – $_"
         return
@@ -57,7 +57,7 @@ function Invoke-UsmLogRotation {
                 level   = 'INFO'
                 message = "Log rotated to $arch"
             } | ConvertTo-Json -Compress
-            Add-Content -Path $LogPath -Value $rotEntry
+            Add-Content -Path $LogPath -Value $rotEntry -Encoding utf8
         }
     } catch {
         Write-Warning "Invoke-UsmLogRotation: $_"
