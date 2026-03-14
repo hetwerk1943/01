@@ -7,7 +7,7 @@ Thank you for your interest in contributing!
 1. Fork and clone the repository.
 2. Run the setup script to install development tools:
    ```powershell
-   .\scripts\setup.ps1 -InstallDevTools
+   .\scripts\setup.ps1 -BaseFolder .
    ```
 3. Create a feature branch: `git checkout -b feat/my-feature`.
 
