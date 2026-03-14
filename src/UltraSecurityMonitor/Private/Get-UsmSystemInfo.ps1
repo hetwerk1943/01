@@ -66,7 +66,7 @@ function Backup-UsmFile {
     $baseFolder   = $script:_config.BaseFolder
     $backupFolder = $script:_config.BackupFolder
 
-    if (-not (Test-Path $FilePath)) { return }
+    if (-not (Test-Path -Path $FilePath -PathType Leaf)) { return }
 
     # Only back up files that are under BaseFolder to prevent accidental wide copies
     if (-not (Test-UsmSafePath -Path $FilePath -BaseFolder $baseFolder)) {
