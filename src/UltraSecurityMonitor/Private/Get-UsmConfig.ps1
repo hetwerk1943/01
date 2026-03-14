@@ -111,7 +111,7 @@ function Get-UsmConfig {
     $cfg.SiemFolder   = Join-Path $cfg.BaseFolder 'SIEM'
     $cfg.LogPath      = Join-Path $cfg.BaseFolder 'security.log'
     $cfg.ReportPath   = Join-Path $cfg.BaseFolder 'security-report.txt'
-    $cfg.SiemLogPath  = Join-Path $cfg.SiemFolder  'siem.json'
+    $cfg.SiemLogPath  = Join-Path $cfg.SiemFolder  'siem.ndjson'
     $cfg.WhitelistPath = Join-Path $cfg.BaseFolder 'whitelist.json'
 
     return [PSCustomObject]$cfg
