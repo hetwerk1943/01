@@ -141,6 +141,13 @@ function Start-UltraSecurityMonitor {
     Write-Host "   Log:     $($cfg.LogPath)"
     Write-Host "   Report:  $($cfg.ReportPath)"
     Write-Host "   SIEM:    $($cfg.SiemLogPath)"
+
+    # ── Run loop ─────────────────────────────────────────────────────────────
+    # Keep the process alive so WMI/Object event subscriptions can fire.
+    # Use a timeout to avoid busy-waiting while still remaining responsive.
+    while ($true) {
+        Wait-Event -Timeout 5 | Out-Null
+    }
 }
 
 # ── Internal folder-monitor helper (called from public function) ─────────────
