@@ -190,7 +190,9 @@ function Register-UsmFolderMonitor {
             $msg        = "File ${changeType}: $path"
 
             Write-UsmLog -Message $msg -Fields @{ event = 'FileChange'; path = $path }
-            Backup-UsmFile -FilePath $path
+            if (Test-Path -LiteralPath $path -PathType Leaf) {
+                Backup-UsmFile -FilePath $path
+            }
             Write-UsmSiemEvent -EventType 'FileChange' -Severity 'Low' -Data @{
                 path   = $path
                 change = $changeType.ToString()
